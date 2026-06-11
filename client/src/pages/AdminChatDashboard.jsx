@@ -1,99 +1,357 @@
-import { useEffect, useState } from "react";
-import API from "../api/api";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+const supabase = require("../config/supabase");
 
-export default function AdminChatDashboard() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+/**
+ * USER - REQUEST SPECIFIC PARTNER (URL-BASED ADMIN SYSTEM)
+ */
+const requestMatch = async (req, res) => {
+  try {
+    const { user_id, partner_id, admin_route, admin_id } = req.body;
 
-  const [chats, setChats] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const finalAdminRoute = admin_route || admin_id;
 
-  useEffect(() => {
-    if (user?.id) {
-      loadChats();
+    if (!user_id || !partner_id || !finalAdminRoute) {
+      return res.status(400).json({
+        message: "user_id, partner_id and admin_route/admin_id are required"
+      });
     }
-  }, [user]);
 
-  const loadChats = async () => {
-    try {
-      setLoading(true);
+    const allowedAdmins =
+      process.env.ALLOWED_ADMINS?.split(",") || [];
 
-      const res = await API.get(
-        `/match/admin/${user.id}/chats`
-      );
-
-      setChats(res.data.chats || []);
-    } catch (err) {
-      console.error("Admin chat load error:", err);
-    } finally {
-      setLoading(false);
+    if (allowedAdmins.length > 0) {
+      if (!allowedAdmins.includes(finalAdminRoute)) {
+        return res.status(403).json({
+          message: "Unauthorized admin route"
+        });
+      }
     }
-  };
 
-  const openChat = (requestId) => {
-    navigate(`/chat/${requestId}`);
-  };
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user_id)
+      .single();
 
-  if (!user) {
-    return <div style={{ padding: 20 }}>Please login</div>;
+    if (userError || !user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    const { data: admin, error: adminError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("admin_route", finalAdminRoute)
+      .single();
+
+    if (adminError || !admin) {
+      return res.status(404).json({
+        message: "Admin not found"
+      });
+    }
+
+    const { data: partner, error: partnerError } = await supabase
+      .from("public_partners")
+      .select("*")
+      .eq("id", partner_id)
+      .single();
+
+    if (partnerError || !partner) {
+      return res.status(404).json({
+        message: "Selected partner not found"
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("match_requests")
+      .insert([
+        {
+          user_id,
+          admin_id: admin.id,
+          partner_id,
+          status: "pending"
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    res.json({
+      message: `Request sent for ${partner.name}`,
+      request: data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
   }
+};
 
-  if (loading) {
-    return <div style={{ padding: 20 }}>Loading chats...</div>;
+/**
+ * GET SINGLE REQUEST
+ */
+const getRequestById = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+
+    const { data, error } = await supabase
+      .from("match_requests")
+      .select("*")
+      .eq("id", requestId)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({
+        error: "Request not found"
+      });
+    }
+
+    res.json({ request: data });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
   }
+};
 
-  return (
-    <div style={styles.container}>
-      <h2>🧑‍💼 Admin Chat Dashboard</h2>
+/**
+ * ADMIN DASHBOARD USERS
+ */
+const getAdminDashboardUsers = async (req, res) => {
+  try {
+    const { admin_id } = req.params;
 
-      {chats.length === 0 ? (
-        <p>No chats found</p>
-      ) : (
-        chats.map((chat) => (
-          <div key={chat.id} style={styles.card}>
-            <h3>{chat.users?.name}</h3>
+    const { data, error } = await supabase
+      .from("match_requests")
+      .select(`
+        id,
+        status,
+        created_at,
+        user_id,
+        partner_id,
+        admin_message,
+        partner_contact,
+        users:user_id (
+          id,
+          name,
+          email
+        ),
+        public_partners:partner_id (
+          id,
+          name,
+          gender,
+          age,
+          country,
+          occupation,
+          profile_image,
+          contact_info
+        )
+      `)
+      .eq("admin_id", admin_id)
+      .order("created_at", { ascending: false });
 
-            <p>
-              Partner: <b>{chat.public_partners?.name}</b>
-            </p>
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
 
-            <p>Status: {chat.status}</p>
+    res.json({
+      message: "Dashboard loaded successfully",
+      requests: data
+    });
 
-            <button
-              style={styles.button}
-              onClick={() => openChat(chat.id)}
-            >
-              Open Chat
-            </button>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
-
-const styles = {
-  container: {
-    maxWidth: "800px",
-    margin: "20px auto",
-    padding: "20px",
-    fontFamily: "Arial"
-  },
-  card: {
-    padding: "15px",
-    border: "1px solid #ddd",
-    borderRadius: "10px",
-    marginBottom: "10px",
-    background: "#f9f9f9"
-  },
-  button: {
-    padding: "8px 12px",
-    background: "green",
-    color: "white",
-    border: "none",
-    cursor: "pointer",
-    borderRadius: "5px"
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
   }
+};
+
+/**
+ * 🔥 NEW FIX: ADMIN CHAT LIST (MISSING ENDPOINT)
+ */
+const getAdminChats = async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+
+    const { data, error } = await supabase
+      .from("match_requests")
+      .select(`
+        id,
+        status,
+        created_at,
+        user_id,
+        partner_id,
+        admin_id,
+        users:user_id (
+          id,
+          name,
+          email
+        ),
+        public_partners:partner_id (
+          id,
+          name,
+          gender,
+          age,
+          country,
+          occupation,
+          profile_image
+        )
+      `)
+      .eq("admin_id", admin_id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    res.json({
+      chats: data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
+/**
+ * ADMIN APPROVE
+ */
+const approveRequest = async (req, res) => {
+  try {
+    const { request_id, partner_contact, admin_message } = req.body;
+
+    const { data, error } = await supabase
+      .from("match_requests")
+      .update({
+        status: "connected",
+        partner_contact: partner_contact || null,
+        admin_message: admin_message || "Connection approved"
+      })
+      .eq("id", request_id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    res.json({
+      message: "User connected successfully",
+      request: data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
+/**
+ * ADMIN REJECT
+ */
+const rejectRequest = async (req, res) => {
+  try {
+    const { request_id, reason } = req.body;
+
+    const { data, error } = await supabase
+      .from("match_requests")
+      .update({
+        status: "rejected",
+        admin_message: reason || "Request rejected"
+      })
+      .eq("id", request_id)
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    res.json({
+      message: "Request rejected",
+      request: data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
+/**
+ * USER DASHBOARD
+ */
+const getUserDashboard = async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const { data, error } = await supabase
+      .from("match_requests")
+      .select(`
+        id,
+        status,
+        created_at,
+        admin_message,
+        partner_contact,
+        partner_id,
+        public_partners:partner_id (
+          id,
+          name,
+          gender,
+          age,
+          country,
+          occupation,
+          profile_image,
+          bio,
+          contact_info
+        )
+      `)
+      .eq("user_id", user_id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    res.json({
+      message: "User dashboard loaded",
+      requests: data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
+module.exports = {
+  requestMatch,
+  getRequestById,
+  getAdminDashboardUsers,
+  getAdminChats,   // ✅ ADDED
+  approveRequest,
+  rejectRequest,
+  getUserDashboard
 };
