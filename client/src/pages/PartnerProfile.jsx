@@ -13,9 +13,13 @@ export default function PartnerProfile() {
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ SUPPORT BOTH SYSTEMS (URL + LOCALSTORAGE)
-  const adminRoute =
-    searchParams.get("adminId") || localStorage.getItem("adminId") || "";
+  // ✅ FIXED ADMIN RESOLUTION (ROBUST)
+  const adminRoute = (() => {
+    const urlAdmin = searchParams.get("adminId");
+    const storedAdmin = localStorage.getItem("adminId");
+
+    return urlAdmin || storedAdmin || null;
+  })();
 
   useEffect(() => {
     fetchPartner();
@@ -45,9 +49,9 @@ export default function PartnerProfile() {
         return;
       }
 
-      // ❗ HARD GUARD (IMPORTANT FOR PRODUCTION)
-      if (!adminRoute || adminRoute.trim() === "") {
-        alert("Admin route missing. Please open correct admin link.");
+      // 🔐 HARD GUARD (FIXED)
+      if (!adminRoute) {
+        alert("Admin not found. Please open correct admin link.");
         return;
       }
 
