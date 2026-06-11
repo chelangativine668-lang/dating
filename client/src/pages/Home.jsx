@@ -8,6 +8,10 @@ export default function Home() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    // ✅ GET ALLOWED ADMINS FROM ENV
+    const allowedAdmins =
+      import.meta.env.VITE_ALLOWED_ADMINS?.split(",") || [];
+
     // ✅ PRIORITY 1: QUERY PARAM (?adminId=123)
     let adminId = searchParams.get("adminId");
 
@@ -16,13 +20,22 @@ export default function Home() {
       adminId = localStorage.getItem("adminId");
     }
 
-    // ✅ STORE FOR CHAT + PROFILE SYSTEM
-    if (adminId) {
+    // 🔐 VALIDATE ADMIN AGAINST WHITELIST
+    if (adminId && allowedAdmins.length > 0) {
+      if (allowedAdmins.includes(adminId)) {
+        localStorage.setItem("adminId", adminId);
+      } else {
+        console.log("❌ Invalid adminId blocked:", adminId);
+        localStorage.removeItem("adminId");
+        adminId = null;
+      }
+    } else if (adminId) {
+      // fallback if env not set
       localStorage.setItem("adminId", adminId);
     }
 
     loadPartners();
-  }, []);
+  }, [searchParams]);
 
   const loadPartners = async () => {
     try {

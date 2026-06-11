@@ -16,6 +16,18 @@ const requestMatch = async (req, res) => {
       });
     }
 
+    // 🔐 ENV WHITELIST CHECK (NEW SECURITY LAYER)
+    const allowedAdmins =
+      process.env.ALLOWED_ADMINS?.split(",") || [];
+
+    if (allowedAdmins.length > 0) {
+      if (!allowedAdmins.includes(finalAdminRoute)) {
+        return res.status(403).json({
+          message: "Unauthorized admin route"
+        });
+      }
+    }
+
     // GET USER
     const { data: user, error: userError } = await supabase
       .from("users")
@@ -39,6 +51,13 @@ const requestMatch = async (req, res) => {
     if (adminError || !admin) {
       return res.status(404).json({
         message: "Admin not found"
+      });
+    }
+
+    // 🔐 ENSURE ROLE IS ADMIN (IMPORTANT HARD CHECK)
+    if (admin.role !== "admin") {
+      return res.status(403).json({
+        message: "User is not an admin"
       });
     }
 
@@ -150,7 +169,7 @@ const getAdminDashboardUsers = async (req, res) => {
           contact_info
         )
       `)
-      .eq("admin_id", admin_id) // ✅ THIS IS YOUR SECURITY LAYER
+      .eq("admin_id", admin_id)
       .order("created_at", { ascending: false });
 
     if (error) {

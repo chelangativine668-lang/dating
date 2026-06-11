@@ -15,7 +15,7 @@ export default function PartnerProfile() {
 
   // ✅ SUPPORT BOTH SYSTEMS (URL + LOCALSTORAGE)
   const adminRoute =
-    searchParams.get("adminId") || localStorage.getItem("adminId");
+    searchParams.get("adminId") || localStorage.getItem("adminId") || "";
 
   useEffect(() => {
     fetchPartner();
@@ -46,7 +46,7 @@ export default function PartnerProfile() {
       }
 
       // ❗ HARD GUARD (IMPORTANT FOR PRODUCTION)
-      if (!adminRoute) {
+      if (!adminRoute || adminRoute.trim() === "") {
         alert("Admin route missing. Please open correct admin link.");
         return;
       }
