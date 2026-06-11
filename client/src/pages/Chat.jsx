@@ -1,136 +1,170 @@
-require("dotenv").config();
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import API from "../api/api";
+import { useAuth } from "../context/AuthContext";
 
-const express = require("express");
-const cors = require("cors");
-const http = require("http");
-const { Server } = require("socket.io");
+export default function Chat() {
+  const { requestId } = useParams();
+  const { user } = useAuth();
 
-// Supabase client
-const supabase = require("./src/config/supabase");
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [adminId, setAdminId] = useState("");
+  const [loading, setLoading] = useState(true);
 
-// Routes
-const authRoutes = require("./src/routes/authRoutes");
-const adminRoutes = require("./src/routes/adminRoutes");
-const matchRoutes = require("./src/routes/matchRoutes");
-const chatRoutes = require("./src/routes/chatRoutes");
-const partnerRoutes = require("./src/routes/partnerRoutes");
+  useEffect(() => {
+    if (requestId && user) {
+      loadChat();
+    }
+  }, [requestId, user]);
 
-const app = express();
+  const loadChat = async () => {
+    try {
+      setLoading(true);
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+      const requestRes = await API.get(
+        `/match/request/${requestId}`
+      );
 
-/**
- * BASE ROUTE
- */
-app.get("/", (req, res) => {
-  res.send("Matchmaking API is running 🚀");
-});
+      const request = requestRes.data?.request;
 
-/**
- * TEST ROUTES (UNCHANGED)
- */
-app.get("/test-users", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("users").select("*");
-    if (error) return res.status(400).json({ error: error.message });
-    res.json({ data });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+      if (request) {
+        setAdminId(request.admin_id);
+      }
+
+      const chatRes = await API.get(
+        `/chat/${requestId}`
+      );
+
+      setMessages(chatRes.data.messages || []);
+
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!text.trim()) return;
+
+    try {
+      await API.post("/chat/send", {
+        match_request_id: requestId,
+        sender_id: user.id,
+        receiver_id: adminId,
+        message: text
+      });
+
+      setText("");
+      loadChat();
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send message");
+    }
+  };
+
+  if (!user) {
+    return <div>Please login first</div>;
   }
-});
 
-app.get("/test-profiles", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("profiles").select("*");
-    if (error) return res.status(400).json({ error: error.message });
-    res.json({ data });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  if (loading) {
+    return <div>Loading chat...</div>;
   }
-});
 
-app.get("/test-requests", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("match_requests").select("*");
-    if (error) return res.status(400).json({ error: error.message });
-    res.json({ data });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  return (
+    <div style={styles.container}>
+      <h2>💬 Chat With Admin</h2>
+
+      <div style={styles.chatBox}>
+        {messages.length === 0 ? (
+          <p>No messages yet</p>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              style={{
+                ...styles.message,
+                alignSelf:
+                  msg.sender_id === user.id
+                    ? "flex-end"
+                    : "flex-start",
+                backgroundColor:
+                  msg.sender_id === user.id
+                    ? "#DCF8C6"
+                    : "#fff"
+              }}
+            >
+              {msg.message}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div style={styles.inputBox}>
+        <input
+          value={text}
+          placeholder="Type message..."
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) =>
+            e.key === "Enter" && sendMessage()
+          }
+          style={styles.input}
+        />
+
+        <button
+          onClick={sendMessage}
+          style={styles.button}
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    maxWidth: "700px",
+    margin: "20px auto",
+    padding: "20px",
+    fontFamily: "Arial"
+  },
+  chatBox: {
+    height: "450px",
+    border: "1px solid #ccc",
+    borderRadius: "10px",
+    padding: "10px",
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
+    background: "#f5f5f5"
+  },
+  message: {
+    padding: "10px",
+    margin: "5px 0",
+    borderRadius: "10px",
+    maxWidth: "70%",
+    wordBreak: "break-word"
+  },
+  inputBox: {
+    display: "flex",
+    gap: "10px",
+    marginTop: "10px"
+  },
+  input: {
+    flex: 1,
+    padding: "10px",
+    border: "1px solid #ccc",
+    borderRadius: "5px"
+  },
+  button: {
+    padding: "10px 20px",
+    background: "green",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer"
   }
-});
-
-app.get("/test-partners", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("public_partners").select("*");
-    if (error) return res.status(400).json({ error: error.message });
-    res.json({ data });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-/**
- * API ROUTES
- */
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/match", matchRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/partners", partnerRoutes);
-
-/**
- * HANDLE UNKNOWN ROUTES
- */
-app.use((req, res) => {
-  res.status(404).json({
-    error: "Route not found",
-    path: req.originalUrl
-  });
-});
-
-/**
- * 🚀 SOCKET.IO REAL-TIME SETUP
- */
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
-
-io.on("connection", (socket) => {
-  console.log("🟢 User connected:", socket.id);
-
-  /**
-   * JOIN CHAT ROOM
-   * room = match_request_id
-   */
-  socket.on("join_room", (requestId) => {
-    socket.join(requestId);
-    console.log(`User joined room: ${requestId}`);
-  });
-
-  /**
-   * REAL-TIME MESSAGE
-   */
-  socket.on("send_message", (data) => {
-    io.to(data.requestId).emit("receive_message", data);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("🔴 User disconnected:", socket.id);
-  });
-});
-
-/**
- * START SERVER
- */
-const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+};
