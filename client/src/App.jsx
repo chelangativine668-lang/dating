@@ -1,31 +1,37 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
-import PartnerProfile from "./pages/PartnerProfile";
 import Login from "./pages/Login";
 import Chat from "./pages/Chat";
+import AdminDashboard from "./pages/AdminDashboard";
 import AdminChatDashboard from "./pages/AdminChatDashboard";
+import PartnerProfile from "./pages/PartnerProfile";
+
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      {/* NAVIGATION BAR (visible on all pages) */}
+      <Navbar />
 
-        {/* HOME - Partner list */}
+      {/* APP ROUTES */}
+      <Routes>
+        {/* HOME / PARTNERS PAGE */}
         <Route path="/" element={<Home />} />
 
-        {/* LOGIN */}
+        {/* AUTH */}
         <Route path="/login" element={<Login />} />
+
+        {/* CHAT */}
+        <Route path="/chat/:requestId" element={<Chat />} />
+
+        {/* ADMIN */}
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/chat" element={<AdminChatDashboard />} />
 
         {/* PARTNER PROFILE */}
         <Route path="/partner/:id" element={<PartnerProfile />} />
-
-        {/* CHAT (USER ↔ ADMIN) */}
-        <Route path="/chat/:requestId" element={<Chat />} />
-
-        {/* 🧑‍💼 ADMIN CHAT DASHBOARD */}
-        <Route path="/admin/chat" element={<AdminChatDashboard />} />
-
       </Routes>
     </BrowserRouter>
   );
