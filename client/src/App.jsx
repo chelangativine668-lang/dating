@@ -17,10 +17,10 @@ function App() {
       <Navbar />
 
       <Routes>
-        {/* HOME */}
+        {/* DEFAULT HOME */}
         <Route path="/" element={<Home />} />
 
-        {/* ✅ NEW: ADMIN ROUTE FROM URL (YOUR MAIN GOAL) */}
+        {/* 🔥 ADMIN URL ENTRY POINT (IMPORTANT FIX) */}
         <Route path="/:adminId" element={<Home />} />
 
         {/* AUTH */}
@@ -32,7 +32,8 @@ function App() {
         {/* CHAT */}
         <Route path="/chat/:requestId" element={<Chat />} />
 
-        {/* ADMIN DASHBOARD (KEEP EXISTING - DO NOT BREAK OLD LINKS) */}
+        {/* ADMIN DASHBOARD */}
+        <Route path="/admin/:adminId" element={<AdminDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
 
         {/* ADMIN CHAT */}
