@@ -12,8 +12,10 @@ export default function PartnerProfile() {
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ SINGLE SOURCE OF TRUTH (CLEAN FIX)
-  const adminRoute = localStorage.getItem("adminId");
+  // ✅ FIXED: SAFE ADMIN RESOLUTION (IMPORTANT FIX ONLY)
+  const adminRoute =
+    localStorage.getItem("adminId") ||
+    window.location.pathname.replace("/", "");
 
   useEffect(() => {
     fetchPartner();
@@ -33,9 +35,6 @@ export default function PartnerProfile() {
     }
   };
 
-  /**
-   * CREATE MATCH REQUEST + START CHAT
-   */
   const startChat = async () => {
     try {
       if (!user?.id) {
@@ -43,7 +42,6 @@ export default function PartnerProfile() {
         return;
       }
 
-      // 🔐 HARD GUARD (STABLE)
       if (!adminRoute) {
         alert("Admin not found. Please open correct admin link.");
         return;
@@ -83,20 +81,13 @@ export default function PartnerProfile() {
       <img
         src={partner.profile_image}
         alt="profile"
-        style={{
-          width: "200px",
-          borderRadius: "10px"
-        }}
+        style={{ width: "200px", borderRadius: "10px" }}
       />
 
       <p>{partner.bio}</p>
-      <p>
-        {partner.age} | {partner.gender} | {partner.country}
-      </p>
-
+      <p>{partner.age} | {partner.gender} | {partner.country}</p>
       <p>{partner.occupation}</p>
 
-      {/* CHAT BUTTON */}
       <button
         onClick={startChat}
         style={{
