@@ -1,11 +1,10 @@
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function PartnerProfile() {
   const { id } = useParams();
-  const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -13,13 +12,8 @@ export default function PartnerProfile() {
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ FIXED ADMIN RESOLUTION (ROBUST)
-  const adminRoute = (() => {
-    const urlAdmin = searchParams.get("adminId");
-    const storedAdmin = localStorage.getItem("adminId");
-
-    return urlAdmin || storedAdmin || null;
-  })();
+  // ✅ SINGLE SOURCE OF TRUTH (CLEAN FIX)
+  const adminRoute = localStorage.getItem("adminId");
 
   useEffect(() => {
     fetchPartner();
@@ -49,7 +43,7 @@ export default function PartnerProfile() {
         return;
       }
 
-      // 🔐 HARD GUARD (FIXED)
+      // 🔐 HARD GUARD (STABLE)
       if (!adminRoute) {
         alert("Admin not found. Please open correct admin link.");
         return;

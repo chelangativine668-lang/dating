@@ -4,9 +4,6 @@ export default function PartnerCard({ partner }) {
   // ✅ GET ADMIN FROM LOCAL STORAGE
   const adminId = localStorage.getItem("adminId");
 
-  // 🔐 BUILD SAFE URL PARAM
-  const adminQuery = adminId ? `?adminId=${adminId}` : "";
-
   return (
     <div style={styles.card}>
       <img
@@ -20,8 +17,8 @@ export default function PartnerCard({ partner }) {
       <p>{partner.country}</p>
       <p>{partner.occupation}</p>
 
-      {/* ✅ SAFE NAVIGATION WITH ADMIN CHECK */}
-      <Link to={`/partner/${partner.id}${adminQuery}`}>
+      {/* ✅ CLEAN ADMIN ROUTE SYSTEM */}
+      <Link to={`/partner/${partner.id}`}>
         <button style={styles.button}>
           View Profile
         </button>

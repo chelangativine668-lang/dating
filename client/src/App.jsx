@@ -20,18 +20,19 @@ function App() {
         {/* HOME */}
         <Route path="/" element={<Home />} />
 
+        {/* ✅ NEW: ADMIN ROUTE FROM URL (YOUR MAIN GOAL) */}
+        <Route path="/:adminId" element={<Home />} />
+
         {/* AUTH */}
         <Route path="/login" element={<Login />} />
 
         {/* REGISTER */}
         <Route path="/register" element={<Register />} />
+
         {/* CHAT */}
         <Route path="/chat/:requestId" element={<Chat />} />
 
-        {/* ADMIN DASHBOARD (NEW FIX) */}
-        <Route path="/admin/:adminId" element={<AdminDashboard />} />
-
-        {/* FALLBACK ADMIN (OLD SUPPORT) */}
+        {/* ADMIN DASHBOARD (KEEP EXISTING - DO NOT BREAK OLD LINKS) */}
         <Route path="/admin" element={<AdminDashboard />} />
 
         {/* ADMIN CHAT */}

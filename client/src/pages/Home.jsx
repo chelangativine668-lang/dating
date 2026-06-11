@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import API from "../api/api";
 import PartnerCard from "../components/PartnerCard";
 
 export default function Home() {
   const [partners, setPartners] = useState([]);
-  const [searchParams] = useSearchParams();
+
+  // ✅ NEW: GET ADMIN FROM URL PARAM (/admin123)
+  const { adminId: routeAdminId } = useParams();
 
   useEffect(() => {
     // ✅ GET ALLOWED ADMINS FROM ENV
     const allowedAdmins =
       import.meta.env.VITE_ALLOWED_ADMINS?.split(",") || [];
 
-    // ✅ PRIORITY 1: QUERY PARAM (?adminId=123)
-    let adminId = searchParams.get("adminId");
+    // 🔵 PRIORITY: URL PARAM ONLY (NEW SYSTEM)
+    let adminId = routeAdminId;
 
-    // ✅ PRIORITY 2: FALLBACK LOCALSTORAGE
+    // 🔵 FALLBACK: LOCALSTORAGE (KEEP BACKWARD COMPATIBILITY)
     if (!adminId) {
       adminId = localStorage.getItem("adminId");
     }
@@ -35,7 +37,7 @@ export default function Home() {
     }
 
     loadPartners();
-  }, [searchParams]);
+  }, [routeAdminId]);
 
   const loadPartners = async () => {
     try {
