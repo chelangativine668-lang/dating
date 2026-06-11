@@ -13,7 +13,7 @@ export default function PartnerProfile() {
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ SUPPORT BOTH SYSTEMS
+  // ✅ SUPPORT BOTH SYSTEMS (URL + LOCALSTORAGE)
   const adminRoute =
     searchParams.get("adminId") || localStorage.getItem("adminId");
 
@@ -45,15 +45,16 @@ export default function PartnerProfile() {
         return;
       }
 
+      // ❗ HARD GUARD (IMPORTANT FOR PRODUCTION)
       if (!adminRoute) {
-        alert("Admin route missing");
+        alert("Admin route missing. Please open correct admin link.");
         return;
       }
 
       const res = await API.post("/match/request", {
         user_id: user.id,
         partner_id: id,
-        admin_route: adminRoute, // ✅ ALWAYS CONSISTENT
+        admin_route: adminRoute,
       });
 
       const requestId = res.data?.request?.id;

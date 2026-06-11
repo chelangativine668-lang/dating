@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 export default function PartnerCard({ partner }) {
-  // ✅ GET ADMIN FROM LOCAL STORAGE (your system standard)
+  // ✅ GET ADMIN FROM LOCAL STORAGE
   const adminId = localStorage.getItem("adminId");
 
   return (
@@ -17,8 +17,8 @@ export default function PartnerCard({ partner }) {
       <p>{partner.country}</p>
       <p>{partner.occupation}</p>
 
-      {/* ✅ FIX: include adminId in navigation */}
-      <Link to={`/partner/${partner.id}?adminId=${adminId}`}>
+      {/* ✅ SAFE NAVIGATION WITH ADMIN CHECK */}
+      <Link to={`/partner/${partner.id}${adminId ? `?adminId=${adminId}` : ""}`}>
         <button style={styles.button}>
           View Profile
         </button>
