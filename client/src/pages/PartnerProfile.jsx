@@ -1,15 +1,21 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function PartnerProfile() {
-  const { adminRoute, id } = useParams(); // 👈 IMPORTANT CHANGE
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // ✅ SUPPORT BOTH SYSTEMS
+  const adminRoute =
+    searchParams.get("adminId") || localStorage.getItem("adminId");
 
   useEffect(() => {
     fetchPartner();
@@ -39,10 +45,15 @@ export default function PartnerProfile() {
         return;
       }
 
+      if (!adminRoute) {
+        alert("Admin route missing");
+        return;
+      }
+
       const res = await API.post("/match/request", {
         user_id: user.id,
         partner_id: id,
-        admin_route: adminRoute, // 👈 KEY CHANGE
+        admin_route: adminRoute, // ✅ ALWAYS CONSISTENT
       });
 
       const requestId = res.data?.request?.id;

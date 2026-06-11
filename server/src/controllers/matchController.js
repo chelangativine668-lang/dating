@@ -5,11 +5,14 @@ const supabase = require("../config/supabase");
  */
 const requestMatch = async (req, res) => {
   try {
-    const { user_id, partner_id, admin_route } = req.body;
+    const { user_id, partner_id, admin_route, admin_id } = req.body;
 
-    if (!user_id || !partner_id || !admin_route) {
+    // ✅ SUPPORT BOTH OLD + NEW SYSTEMS
+    const finalAdminRoute = admin_route || admin_id;
+
+    if (!user_id || !partner_id || !finalAdminRoute) {
       return res.status(400).json({
-        message: "user_id, partner_id and admin_route are required"
+        message: "user_id, partner_id and admin_route/admin_id are required"
       });
     }
 
@@ -26,11 +29,11 @@ const requestMatch = async (req, res) => {
       });
     }
 
-    // GET ADMIN BY ROUTE (IMPORTANT CHANGE)
+    // GET ADMIN BY ROUTE (URL SYSTEM)
     const { data: admin, error: adminError } = await supabase
       .from("users")
       .select("*")
-      .eq("admin_route", admin_route)
+      .eq("admin_route", finalAdminRoute)
       .single();
 
     if (adminError || !admin) {
@@ -58,7 +61,7 @@ const requestMatch = async (req, res) => {
       .insert([
         {
           user_id,
-          admin_id: admin.id, // 👈 LINKED TO URL ADMIN
+          admin_id: admin.id, // ✅ ALWAYS LINKED TO REAL ADMIN ID
           partner_id,
           status: "pending"
         }
@@ -147,7 +150,7 @@ const getAdminDashboardUsers = async (req, res) => {
           contact_info
         )
       `)
-      .eq("admin_id", admin_id)
+      .eq("admin_id", admin_id) // ✅ THIS IS YOUR SECURITY LAYER
       .order("created_at", { ascending: false });
 
     if (error) {

@@ -28,8 +28,16 @@ export default function Chat() {
 
       const request = requestRes.data?.request;
 
-      if (request) {
+      // ✅ STEP 1: DB admin_id
+      if (request?.admin_id) {
         setAdminId(request.admin_id);
+      } 
+      // ✅ STEP 2: fallback from URL system (Home.jsx stored)
+      else {
+        const storedAdminId = localStorage.getItem("adminId");
+        if (storedAdminId) {
+          setAdminId(storedAdminId);
+        }
       }
 
       const chatRes = await API.get(
@@ -52,7 +60,7 @@ export default function Chat() {
       await API.post("/chat/send", {
         match_request_id: requestId,
         sender_id: user.id,
-        receiver_id: adminId,
+        receiver_id: adminId, // ✅ ALWAYS LINKED TO URL ADMIN SYSTEM
         message: text
       });
 

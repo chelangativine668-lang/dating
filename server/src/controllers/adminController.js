@@ -22,7 +22,7 @@ const createAdmin = async (req, res) => {
     // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // generate admin route
+    // generate admin route (URL system)
     const adminRoute =
       name.toLowerCase().replace(/\s/g, "") +
       Math.floor(Math.random() * 1000);
@@ -36,7 +36,7 @@ const createAdmin = async (req, res) => {
           email,
           password: hashedPassword,
           role: "admin",
-          admin_route: adminRoute
+          admin_route: adminRoute // ✅ USED BY FRONTEND URL SYSTEM
         }
       ])
       .select()
@@ -48,7 +48,8 @@ const createAdmin = async (req, res) => {
 
     res.json({
       message: "Admin created successfully",
-      admin: data
+      admin: data,
+      admin_url: `/admin/${adminRoute}` // ✅ IMPORTANT FOR FRONTEND
     });
 
   } catch (err) {
@@ -57,25 +58,47 @@ const createAdmin = async (req, res) => {
 };
 
 /**
- * ADMIN - GET MY USERS
+ * ADMIN - GET MY DASHBOARD USERS (FIXED)
+ * NOW CONSISTENT WITH match_requests SYSTEM
  */
 const getMyUsers = async (req, res) => {
   try {
     const { adminId } = req.params;
 
+    // ❗ FIX: get users through match_requests (NOT assigned_admin_id)
     const { data, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("assigned_admin_id", adminId)
-      .eq("role", "user");
+      .from("match_requests")
+      .select(`
+        id,
+        status,
+        created_at,
+        user_id,
+        partner_id,
+        users:user_id (
+          id,
+          name,
+          email
+        ),
+        public_partners:partner_id (
+          id,
+          name,
+          gender,
+          age,
+          country,
+          occupation,
+          profile_image
+        )
+      `)
+      .eq("admin_id", adminId)
+      .order("created_at", { ascending: false });
 
     if (error) {
       return res.status(400).json({ error: error.message });
     }
 
     res.json({
-      message: "Admin users fetched successfully",
-      users: data
+      message: "Admin dashboard users fetched successfully",
+      requests: data
     });
 
   } catch (err) {

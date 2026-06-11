@@ -1,17 +1,25 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import API from "../api/api";
 
 export default function AdminDashboard() {
-  const admin_id = "YOUR_ADMIN_ID"; // replace later with login
+  const { adminId: routeAdminId } = useParams();
+
+  // ✅ FALLBACK SYSTEM (VERY IMPORTANT)
+  const adminId =
+    routeAdminId || localStorage.getItem("adminId");
+
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (adminId) {
+      loadData();
+    }
+  }, [adminId]);
 
   const loadData = async () => {
     try {
-      const res = await API.get(`/match/dashboard/${admin_id}`);
+      const res = await API.get(`/match/dashboard/${adminId}`);
       setRequests(res.data.requests);
     } catch (err) {
       console.log(err);
@@ -28,9 +36,17 @@ export default function AdminDashboard() {
     loadData();
   };
 
+  if (!adminId) {
+    return (
+      <div style={{ padding: "20px", color: "red" }}>
+        No admin ID found. Please access via admin link.
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Admin Dashboard</h2>
+      <h2>Admin Dashboard (ID: {adminId})</h2>
 
       {requests.map((r) => (
         <div key={r.id} style={styles.card}>
@@ -46,7 +62,9 @@ export default function AdminDashboard() {
             style={{ width: "150px" }}
           />
           <p>{r.public_partners?.name}</p>
-          <p>{r.public_partners?.gender} • {r.public_partners?.age}</p>
+          <p>
+            {r.public_partners?.gender} • {r.public_partners?.age}
+          </p>
           <p>{r.public_partners?.country}</p>
           <p>{r.public_partners?.occupation}</p>
 

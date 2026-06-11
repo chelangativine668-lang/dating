@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 
 export default function PartnerCard({ partner }) {
+  // ✅ GET ADMIN FROM LOCAL STORAGE (your system standard)
+  const adminId = localStorage.getItem("adminId");
+
   return (
     <div style={styles.card}>
       <img
@@ -14,7 +17,8 @@ export default function PartnerCard({ partner }) {
       <p>{partner.country}</p>
       <p>{partner.occupation}</p>
 
-      <Link to={`/partner/${partner.id}`}>
+      {/* ✅ FIX: include adminId in navigation */}
+      <Link to={`/partner/${partner.id}?adminId=${adminId}`}>
         <button style={styles.button}>
           View Profile
         </button>

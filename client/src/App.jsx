@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Chat from "./pages/Chat";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminChatDashboard from "./pages/AdminChatDashboard";
@@ -12,22 +13,28 @@ import Navbar from "./components/Navbar";
 function App() {
   return (
     <BrowserRouter>
-      {/* NAVIGATION BAR (visible on all pages) */}
+      {/* NAVIGATION BAR */}
       <Navbar />
 
-      {/* APP ROUTES */}
       <Routes>
-        {/* HOME / PARTNERS PAGE */}
+        {/* HOME */}
         <Route path="/" element={<Home />} />
 
         {/* AUTH */}
         <Route path="/login" element={<Login />} />
 
+        {/* REGISTER */}
+        <Route path="/register" element={<Register />} />
         {/* CHAT */}
         <Route path="/chat/:requestId" element={<Chat />} />
 
-        {/* ADMIN */}
+        {/* ADMIN DASHBOARD (NEW FIX) */}
+        <Route path="/admin/:adminId" element={<AdminDashboard />} />
+
+        {/* FALLBACK ADMIN (OLD SUPPORT) */}
         <Route path="/admin" element={<AdminDashboard />} />
+
+        {/* ADMIN CHAT */}
         <Route path="/admin/chat" element={<AdminChatDashboard />} />
 
         {/* PARTNER PROFILE */}

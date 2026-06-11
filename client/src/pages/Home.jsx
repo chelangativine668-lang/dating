@@ -1,13 +1,29 @@
 import { useEffect, useState } from "react";
+import { useSearchParams, useParams } from "react-router-dom";
 import API from "../api/api";
 import PartnerCard from "../components/PartnerCard";
 
 export default function Home() {
   const [partners, setPartners] = useState([]);
+  const [searchParams] = useSearchParams();
+  const { adminId: routeAdminId } = useParams(); // ✅ NEW SUPPORT
 
   useEffect(() => {
+    // ✅ PRIORITY 1: URL PARAM (/admin/:adminId)
+    let adminId = routeAdminId;
+
+    // ✅ PRIORITY 2: QUERY PARAM (?adminId=123)
+    if (!adminId) {
+      adminId = searchParams.get("adminId");
+    }
+
+    // ✅ STORE FOR CHAT SYSTEM
+    if (adminId) {
+      localStorage.setItem("adminId", adminId);
+    }
+
     loadPartners();
-  }, []);
+  }, [routeAdminId]);
 
   const loadPartners = async () => {
     try {
