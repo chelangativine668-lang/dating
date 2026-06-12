@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/api";
 
 export default function AdminDashboard() {
   const { adminId: routeAdminId } = useParams();
+  const navigate = useNavigate();
 
-  // ✅ FALLBACK SYSTEM (VERY IMPORTANT)
   const adminId =
     routeAdminId || localStorage.getItem("adminId");
 
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (adminId) {
@@ -19,27 +21,63 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
+      setLoading(true);
+      setError("");
+
       const res = await API.get(`/match/dashboard/${adminId}`);
-      setRequests(res.data.requests);
+      setRequests(res.data.requests || []);
+
+    } catch (err) {
+      console.log(err);
+      setError("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const approve = async (id) => {
+    try {
+      await API.post("/match/approve", { request_id: id });
+      loadData();
     } catch (err) {
       console.log(err);
     }
   };
 
-  const approve = async (id) => {
-    await API.post("/match/approve", { request_id: id });
-    loadData();
+  const reject = async (id) => {
+    try {
+      await API.post("/match/reject", { request_id: id });
+      loadData();
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  const reject = async (id) => {
-    await API.post("/match/reject", { request_id: id });
-    loadData();
+  // 🆕 OPEN CHAT (aligned with chat route)
+  const openChat = (requestId) => {
+    navigate(`/chat/${requestId}`);
   };
 
   if (!adminId) {
     return (
       <div style={{ padding: "20px", color: "red" }}>
         No admin ID found. Please access via admin link.
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ padding: "20px" }}>
+        Loading dashboard...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: "20px", color: "red" }}>
+        {error}
       </div>
     );
   }
@@ -71,8 +109,20 @@ export default function AdminDashboard() {
           <p>Status: {r.status}</p>
 
           <div style={styles.buttons}>
-            <button onClick={() => approve(r.id)}>Approve</button>
-            <button onClick={() => reject(r.id)}>Reject</button>
+            <button onClick={() => approve(r.id)}>
+              Approve
+            </button>
+            <button onClick={() => reject(r.id)}>
+              Reject
+            </button>
+
+            {/* 🆕 CHAT BUTTON */}
+            <button
+              onClick={() => openChat(r.id)}
+              style={{ background: "blue", color: "white" }}
+            >
+              Open Chat
+            </button>
           </div>
         </div>
       ))}

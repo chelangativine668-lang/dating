@@ -4,71 +4,93 @@ import API from "../api/api";
 import PartnerCard from "../components/PartnerCard";
 
 export default function Home() {
-  const [partners, setPartners] = useState([]);
+const [partners, setPartners] = useState([]);
+const [loading, setLoading] = useState(true);
 
-  // ✅ NEW: GET ADMIN FROM URL PARAM (/admin123)
-  const { adminId: routeAdminId } = useParams();
+const { adminId: routeAdminId } = useParams();
 
-  useEffect(() => {
-    // ✅ GET ALLOWED ADMINS FROM ENV
-    const allowedAdmins =
-      import.meta.env.VITE_ALLOWED_ADMINS?.split(",") || [];
+useEffect(() => {
+validateAdmin();
+}, [routeAdminId]);
 
-    // 🔵 PRIORITY: URL PARAM ONLY (NEW SYSTEM)
-    let adminId = routeAdminId;
+const validateAdmin = () => {
+const allowedAdmins =
+import.meta.env.VITE_ALLOWED_ADMINS?.split(",") || [];
 
-    // 🔵 FALLBACK: LOCALSTORAGE (KEEP BACKWARD COMPATIBILITY)
-    if (!adminId) {
-      adminId = localStorage.getItem("adminId");
-    }
+let adminId = routeAdminId;
 
-    // 🔐 VALIDATE ADMIN AGAINST WHITELIST
-    if (adminId && allowedAdmins.length > 0) {
-      if (allowedAdmins.includes(adminId)) {
-        localStorage.setItem("adminId", adminId);
-      } else {
-        console.log("❌ Invalid adminId blocked:", adminId);
-        localStorage.removeItem("adminId");
-        adminId = null;
-      }
-    } else if (adminId) {
-      // fallback if env not set
-      localStorage.setItem("adminId", adminId);
-    }
+if (!adminId) {
+  adminId = localStorage.getItem("adminId");
+}
 
-    loadPartners();
-  }, [routeAdminId]);
+if (adminId && allowedAdmins.length > 0) {
+  if (allowedAdmins.includes(adminId)) {
+    localStorage.setItem("adminId", adminId);
+  } else {
+    console.log("❌ Invalid adminId blocked:", adminId);
+    localStorage.removeItem("adminId");
+    return;
+  }
+} else if (adminId) {
+  localStorage.setItem("adminId", adminId);
+}
 
-  const loadPartners = async () => {
-    try {
-      const res = await API.get("/partners");
-      setPartners(res.data.partners);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+loadPartners();
 
-  return (
-    <div style={styles.container}>
-      <h1>Available Partners</h1>
 
-      <div style={styles.grid}>
-        {partners.map((p) => (
-          <PartnerCard key={p.id} partner={p} />
-        ))}
-      </div>
+};
+
+const loadPartners = async () => {
+try {
+setLoading(true);
+
+
+  const res = await API.get("/partners");
+
+  setPartners(res.data.partners || []);
+} catch (err) {
+  console.log(err);
+} finally {
+  setLoading(false);
+}
+
+
+};
+
+if (loading) {
+return ( <div style={styles.container}> <h2>Loading partners...</h2> </div>
+);
+}
+
+return ( <div style={styles.container}> <h1>Available Partners</h1>
+
+
+  {partners.length === 0 ? (
+    <p>No partners available.</p>
+  ) : (
+    <div style={styles.grid}>
+      {partners.map((p) => (
+        <PartnerCard
+          key={p.id}
+          partner={p}
+        />
+      ))}
     </div>
-  );
+  )}
+</div>
+
+
+);
 }
 
 const styles = {
-  container: {
-    padding: "20px",
-    textAlign: "center"
-  },
-  grid: {
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "center"
-  }
+container: {
+padding: "20px",
+textAlign: "center"
+},
+grid: {
+display: "flex",
+flexWrap: "wrap",
+justifyContent: "center"
+}
 };

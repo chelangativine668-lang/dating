@@ -4,104 +4,132 @@ import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function PartnerProfile() {
-  const { id } = useParams();
+const { id } = useParams();
 
-  const navigate = useNavigate();
-  const { user } = useAuth();
+const navigate = useNavigate();
+const { user } = useAuth();
 
-  const [partner, setPartner] = useState(null);
-  const [loading, setLoading] = useState(true);
+const [partner, setPartner] = useState(null);
+const [loading, setLoading] = useState(true);
 
-  // ✅ FIXED: SAFE ADMIN RESOLUTION (IMPORTANT FIX ONLY)
-  const adminRoute =
-    localStorage.getItem("adminId") ||
-    window.location.pathname.replace("/", "");
+// ✅ SAFE ADMIN RESOLUTION
+const adminRoute =
+localStorage.getItem("adminId") ||
+window.location.pathname.replace("/", "");
 
-  useEffect(() => {
-    fetchPartner();
-  }, [id]);
+useEffect(() => {
+fetchPartner();
+}, [id]);
 
-  const fetchPartner = async () => {
-    try {
-      setLoading(true);
+const fetchPartner = async () => {
+try {
+setLoading(true);
 
-      const res = await API.get(`/partners/${id}`);
-      setPartner(res.data.partner);
 
-    } catch (err) {
-      console.error("Failed to load partner:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const res = await API.get(`/partners/${id}`);
+  setPartner(res.data.partner);
 
-  const startChat = async () => {
-    try {
-      if (!user?.id) {
-        alert("Please login first");
-        return;
-      }
+} catch (err) {
+  console.error("Failed to load partner:", err);
+} finally {
+  setLoading(false);
+}
 
-      if (!adminRoute) {
-        alert("Admin not found. Please open correct admin link.");
-        return;
-      }
 
-      const res = await API.post("/match/request", {
-        user_id: user.id,
-        partner_id: id,
-        admin_route: adminRoute,
-      });
+};
 
-      const requestId = res.data?.request?.id;
+const startChat = async () => {
+try {
+if (!user?.id) {
+alert("Please login first");
+return;
+}
 
-      if (!requestId) {
-        alert("Failed to create chat request");
-        return;
-      }
 
-      navigate(`/chat/${requestId}`);
+  if (!adminRoute) {
+    alert(
+      "Admin not found. Please open correct admin link."
+    );
+    return;
+  }
 
-    } catch (err) {
-      console.error("Chat start error:", err);
-      alert(
-        err.response?.data?.message ||
-        "Failed to start chat"
-      );
-    }
-  };
+  const res = await API.post("/match/request", {
+    user_id: user.id,
+    partner_id: id,
+    admin_route: adminRoute,
+  });
 
-  if (loading) return <p>Loading...</p>;
-  if (!partner) return <p>Partner not found</p>;
+  const requestId = res.data?.request?.id;
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h2>{partner.name}</h2>
+  if (!requestId) {
+    alert("Failed to create chat request");
+    return;
+  }
 
-      <img
-        src={partner.profile_image}
-        alt="profile"
-        style={{ width: "200px", borderRadius: "10px" }}
-      />
+  navigate(`/chat/${requestId}`);
 
-      <p>{partner.bio}</p>
-      <p>{partner.age} | {partner.gender} | {partner.country}</p>
-      <p>{partner.occupation}</p>
+} catch (err) {
+  console.error("Chat start error:", err);
 
-      <button
-        onClick={startChat}
-        style={{
-          marginTop: "15px",
-          padding: "12px",
-          background: "green",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-          borderRadius: "5px"
-        }}
-      >
-        💬 Chat with Admin
-      </button>
-    </div>
+  // ✅ Duplicate active request
+  if (err.response?.status === 409) {
+    alert(
+      err.response?.data?.message ||
+      "You already requested this partner."
+    );
+    return;
+  }
+
+  alert(
+    err.response?.data?.message ||
+    "Failed to start chat"
   );
+}
+
+
+};
+
+if (loading) return <p>Loading...</p>;
+
+if (!partner) return <p>Partner not found</p>;
+
+return (
+<div style={{ padding: "20px" }}> <h2>{partner.name}</h2>
+
+
+  <img
+    src={partner.profile_image}
+    alt="profile"
+    style={{
+      width: "200px",
+      borderRadius: "10px"
+    }}
+  />
+
+  <p>{partner.bio}</p>
+
+  <p>
+    {partner.age} | {partner.gender} | {partner.country}
+  </p>
+
+  <p>{partner.occupation}</p>
+
+  <button
+    onClick={startChat}
+    style={{
+      marginTop: "15px",
+      padding: "12px",
+      background: "green",
+      color: "white",
+      border: "none",
+      cursor: "pointer",
+      borderRadius: "5px"
+    }}
+  >
+    💬 Chat with Admin
+  </button>
+</div>
+
+
+);
 }

@@ -7,10 +7,7 @@ const requestMatch = async (req, res) => {
   try {
     const { user_id, partner_id, admin_route, admin_id } = req.body;
 
-    // ✅ SUPPORT BOTH OLD + NEW SYSTEMS (FIXED NORMALIZATION ONLY)
-    const finalAdminRoute = (admin_route || admin_id || "")
-      .toString()
-      .trim();
+    const finalAdminRoute = admin_route || admin_id;
 
     if (!user_id || !partner_id || !finalAdminRoute) {
       return res.status(400).json({
@@ -18,7 +15,6 @@ const requestMatch = async (req, res) => {
       });
     }
 
-    // 🔐 ENV WHITELIST CHECK (UNCHANGED)
     const allowedAdmins =
       process.env.ALLOWED_ADMINS?.split(",") || [];
 
@@ -30,7 +26,6 @@ const requestMatch = async (req, res) => {
       }
     }
 
-    // GET USER (UNCHANGED)
     const { data: user, error: userError } = await supabase
       .from("users")
       .select("*")
@@ -43,11 +38,10 @@ const requestMatch = async (req, res) => {
       });
     }
 
-    // GET ADMIN BY ROUTE (FIXED CASE INSENSITIVE MATCH)
     const { data: admin, error: adminError } = await supabase
       .from("users")
       .select("*")
-      .ilike("admin_route", finalAdminRoute)
+      .eq("admin_route", finalAdminRoute)
       .single();
 
     if (adminError || !admin) {
@@ -56,14 +50,6 @@ const requestMatch = async (req, res) => {
       });
     }
 
-    // 🔐 ROLE CHECK (UNCHANGED)
-    if (admin.role !== "admin") {
-      return res.status(403).json({
-        message: "User is not an admin"
-      });
-    }
-
-    // GET PARTNER (UNCHANGED)
     const { data: partner, error: partnerError } = await supabase
       .from("public_partners")
       .select("*")
@@ -76,7 +62,6 @@ const requestMatch = async (req, res) => {
       });
     }
 
-    // CREATE MATCH REQUEST (UNCHANGED)
     const { data, error } = await supabase
       .from("match_requests")
       .insert([
@@ -109,7 +94,7 @@ const requestMatch = async (req, res) => {
 };
 
 /**
- * GET SINGLE REQUEST (UNCHANGED)
+ * GET SINGLE REQUEST
  */
 const getRequestById = async (req, res) => {
   try {
@@ -137,7 +122,7 @@ const getRequestById = async (req, res) => {
 };
 
 /**
- * ADMIN DASHBOARD (UNCHANGED)
+ * ADMIN DASHBOARD USERS
  */
 const getAdminDashboardUsers = async (req, res) => {
   try {
@@ -173,7 +158,9 @@ const getAdminDashboardUsers = async (req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({
+        error: error.message
+      });
     }
 
     res.json({
@@ -182,12 +169,65 @@ const getAdminDashboardUsers = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 };
 
 /**
- * ADMIN APPROVE (UNCHANGED)
+ * 🔥 NEW FIX: ADMIN CHAT LIST (MISSING ENDPOINT)
+ */
+const getAdminChats = async (req, res) => {
+  try {
+    const { admin_id } = req.params;
+
+    const { data, error } = await supabase
+      .from("match_requests")
+      .select(`
+        id,
+        status,
+        created_at,
+        user_id,
+        partner_id,
+        admin_id,
+        users:user_id (
+          id,
+          name,
+          email
+        ),
+        public_partners:partner_id (
+          id,
+          name,
+          gender,
+          age,
+          country,
+          occupation,
+          profile_image
+        )
+      `)
+      .eq("admin_id", admin_id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return res.status(400).json({
+        error: error.message
+      });
+    }
+
+    res.json({
+      chats: data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
+/**
+ * ADMIN APPROVE
  */
 const approveRequest = async (req, res) => {
   try {
@@ -205,7 +245,9 @@ const approveRequest = async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({
+        error: error.message
+      });
     }
 
     res.json({
@@ -214,12 +256,14 @@ const approveRequest = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 };
 
 /**
- * ADMIN REJECT (UNCHANGED)
+ * ADMIN REJECT
  */
 const rejectRequest = async (req, res) => {
   try {
@@ -236,7 +280,9 @@ const rejectRequest = async (req, res) => {
       .single();
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({
+        error: error.message
+      });
     }
 
     res.json({
@@ -245,12 +291,14 @@ const rejectRequest = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 };
 
 /**
- * USER DASHBOARD (UNCHANGED)
+ * USER DASHBOARD
  */
 const getUserDashboard = async (req, res) => {
   try {
@@ -281,7 +329,9 @@ const getUserDashboard = async (req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({
+        error: error.message
+      });
     }
 
     res.json({
@@ -290,7 +340,9 @@ const getUserDashboard = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      error: err.message
+    });
   }
 };
 
@@ -298,6 +350,7 @@ module.exports = {
   requestMatch,
   getRequestById,
   getAdminDashboardUsers,
+  getAdminChats,   // ✅ ADDED
   approveRequest,
   rejectRequest,
   getUserDashboard
