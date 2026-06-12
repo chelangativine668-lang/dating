@@ -1,34 +1,40 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-const adminId =
-localStorage.getItem("adminId");
+const { user, logout } = useAuth();
+
+const adminId = localStorage.getItem("adminId");
+
+const handleLogout = () => {
+logout();
+
+
+localStorage.removeItem("adminId");
+
+window.location.href = "/";
+
+
+};
 
 return ( <div style={styles.nav}> <h3>Dating App</h3>
 
 
   <div style={styles.links}>
-    {/* HOME */}
-    <Link to="/">
-      Home
-    </Link>
+    {/* HOME - EVERYONE */}
+    <Link to="/">Home</Link>
 
-    {/* USER AUTH */}
-    <Link to="/login">
-      Login
-    </Link>
+    {/* USER SECTION */}
+    {user && (
+      <>
+        <Link to="/tracking">
+          Track Requests
+        </Link>
+      </>
+    )}
 
-    <Link to="/register">
-      Register
-    </Link>
-
-    {/* USER FEATURES */}
-    <Link to="/tracking">
-      Track Requests
-    </Link>
-
-    {/* ADMIN DASHBOARD */}
-    {adminId ? (
+    {/* ADMIN SECTION */}
+    {adminId && (
       <>
         <Link to={`/admin/${adminId}`}>
           Dashboard
@@ -37,11 +43,34 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
         <Link to="/admin/chat">
           Admin Chats
         </Link>
+
+        <Link to={`/admin/${adminId}`}>
+          Requests
+        </Link>
       </>
-    ) : (
-      <Link to="/admin">
-        Admin
-      </Link>
+    )}
+
+    {/* GUEST */}
+    {!user && (
+      <>
+        <Link to="/login">
+          Login
+        </Link>
+
+        <Link to="/register">
+          Register
+        </Link>
+      </>
+    )}
+
+    {/* LOGGED IN USER OR ADMIN */}
+    {(user || adminId) && (
+      <button
+        onClick={handleLogout}
+        style={styles.logout}
+      >
+        Logout
+      </button>
     )}
   </div>
 </div>
@@ -64,5 +93,14 @@ links: {
 display: "flex",
 gap: "15px",
 alignItems: "center",
+},
+
+logout: {
+background: "#dc3545",
+color: "white",
+border: "none",
+padding: "8px 12px",
+borderRadius: "5px",
+cursor: "pointer",
 },
 };

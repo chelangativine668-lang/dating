@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function RequestTracking() {
 const { user } = useAuth();
+const navigate = useNavigate();
 
 const [requests, setRequests] = useState([]);
 const [loading, setLoading] = useState(true);
@@ -28,6 +30,26 @@ const res = await API.get(
   console.log(err);
 } finally {
   setLoading(false);
+}
+
+
+};
+
+const openChat = (requestId) => {
+navigate(`/chat/${requestId}`);
+};
+
+const getStatusColor = (status) => {
+switch (status) {
+case "connected":
+return "green";
+
+
+  case "rejected":
+    return "red";
+
+  default:
+    return "orange";
 }
 
 
@@ -77,25 +99,62 @@ return ( <div style={styles.container}> <h2>My Request Tracking</h2>
         <p>
           Status:
           {" "}
-          <strong>
+          <strong
+            style={{
+              color:
+                getStatusColor(
+                  request.status
+                )
+            }}
+          >
             {request.status}
           </strong>
         </p>
 
+        {request.status ===
+          "pending" && (
+          <p
+            style={{
+              color: "orange"
+            }}
+          >
+            Waiting for admin review.
+          </p>
+        )}
+
         {request.admin_message && (
           <p>
-            Admin Message:
+            <strong>
+              Admin Message:
+            </strong>
             {" "}
-            {request.admin_message}
+            {
+              request.admin_message
+            }
           </p>
         )}
 
         {request.partner_contact && (
-          <p>
-            Contact:
-            {" "}
-            {request.partner_contact}
-          </p>
+          <div
+            style={{
+              background:
+                "#e8ffe8",
+              padding: "10px",
+              borderRadius:
+                "8px",
+              marginTop: "10px"
+            }}
+          >
+            <strong>
+              Partner Contact:
+            </strong>
+
+            <br />
+
+            {
+              request.partner_contact
+            }
+          </div>
         )}
 
         <p>
@@ -105,6 +164,19 @@ return ( <div style={styles.container}> <h2>My Request Tracking</h2>
             request.created_at
           ).toLocaleString()}
         </p>
+
+        <button
+          onClick={() =>
+            openChat(
+              request.id
+            )
+          }
+          style={
+            styles.chatButton
+          }
+        >
+          Open Chat
+        </button>
       </div>
     ))
   )}
@@ -131,5 +203,15 @@ width: "120px",
 height: "120px",
 objectFit: "cover",
 borderRadius: "10px"
+},
+
+chatButton: {
+marginTop: "10px",
+padding: "10px 15px",
+background: "#007bff",
+color: "white",
+border: "none",
+borderRadius: "5px",
+cursor: "pointer"
 }
 };

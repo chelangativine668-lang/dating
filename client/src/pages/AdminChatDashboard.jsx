@@ -100,7 +100,8 @@ return ( <div style={styles.container}> <h2>Admin Chats</h2>
       <p>{user.email}</p>
 
       <p>
-        Requests:{" "}
+        Total Requests:
+        {" "}
         {user.requests.length}
       </p>
 
@@ -109,26 +110,76 @@ return ( <div style={styles.container}> <h2>Admin Chats</h2>
           key={request.id}
           style={styles.requestBox}
         >
-          <p>
-            Partner:
-            {" "}
-            {
-              request
-                .public_partners
-                ?.name
-            }
-          </p>
+          <div
+            style={{
+              display: "flex",
+              gap: "15px",
+              alignItems: "center"
+            }}
+          >
+            <img
+              src={
+                request.public_partners
+                  ?.profile_image
+              }
+              alt=""
+              style={styles.image}
+            />
 
-          <p>
-            Status:
-            {" "}
-            {request.status}
-          </p>
+            <div>
+              <h4>
+                {
+                  request
+                    .public_partners
+                    ?.name
+                }
+              </h4>
+
+              <p>
+                Status:
+                {" "}
+                <strong>
+                  {request.status}
+                </strong>
+              </p>
+
+              <p>
+                Requested:
+                {" "}
+                {new Date(
+                  request.created_at
+                ).toLocaleString()}
+              </p>
+
+              {request.user_message && (
+                <div
+                  style={{
+                    background:
+                      "#f5f5f5",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    marginTop: "8px"
+                  }}
+                >
+                  <strong>
+                    User Message:
+                  </strong>
+
+                  <p>
+                    {
+                      request.user_message
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
           <button
             onClick={() =>
               openChat(request.id)
             }
+            style={styles.chatBtn}
           >
             Open Chat
           </button>
@@ -156,8 +207,25 @@ marginBottom: "20px"
 
 requestBox: {
 border: "1px solid #eee",
-padding: "10px",
+padding: "15px",
 marginTop: "10px",
 borderRadius: "8px"
+},
+
+image: {
+width: "80px",
+height: "80px",
+borderRadius: "8px",
+objectFit: "cover"
+},
+
+chatBtn: {
+marginTop: "10px",
+background: "#0066ff",
+color: "#fff",
+border: "none",
+padding: "10px 15px",
+borderRadius: "6px",
+cursor: "pointer"
 }
 };
