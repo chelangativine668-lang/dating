@@ -12,10 +12,6 @@ export default function PartnerProfile() {
   const [partner, setPartner] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // USER REQUEST MESSAGE
-  const [requestMessage, setRequestMessage] =
-    useState("");
-
   // ADMIN DETECTION
   const adminId =
     localStorage.getItem("adminId");
@@ -70,7 +66,8 @@ export default function PartnerProfile() {
           user_id: user.id,
           partner_id: id,
           admin_route: adminRoute,
-          user_message: requestMessage
+          user_message:
+            "Request to connect"
         }
       );
 
@@ -141,51 +138,20 @@ export default function PartnerProfile() {
 
       {/* USER ONLY */}
       {!isAdmin && (
-        <>
-          <div
-            style={{
-              marginTop: "20px",
-              maxWidth: "500px"
-            }}
-          >
-            <h3>
-              Message to Admin
-            </h3>
-
-            <textarea
-              value={requestMessage}
-              onChange={(e) =>
-                setRequestMessage(
-                  e.target.value
-                )
-              }
-              placeholder="Tell the admin why you want to connect with this partner..."
-              rows={5}
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "8px",
-                border:
-                  "1px solid #ccc"
-              }}
-            />
-          </div>
-
-          <button
-            onClick={startChat}
-            style={{
-              marginTop: "15px",
-              padding: "12px",
-              background: "green",
-              color: "white",
-              border: "none",
-              cursor: "pointer",
-              borderRadius: "5px"
-            }}
-          >
-            💬 Chat with Admin
-          </button>
-        </>
+        <button
+          onClick={startChat}
+          style={{
+            marginTop: "15px",
+            padding: "12px",
+            background: "green",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            borderRadius: "5px"
+          }}
+        >
+          💬 Chat with Admin
+        </button>
       )}
     </div>
   );
