@@ -4,9 +4,11 @@ import { useAuth } from "../context/AuthContext";
 export default function Navbar() {
 const { user, logout } = useAuth();
 
-const adminId = localStorage.getItem("adminId");
+const adminId =
+localStorage.getItem("adminId");
 
-const isAdmin = user?.role === "admin";
+const isAdmin =
+user?.role === "admin";
 
 const isUser =
 user &&
@@ -16,7 +18,9 @@ const handleLogout = () => {
 logout();
 
 
-localStorage.removeItem("adminId");
+localStorage.removeItem(
+  "adminId"
+);
 
 window.location.href = "/";
 
@@ -37,6 +41,10 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       <>
         <Link to="/tracking">
           Track Requests
+        </Link>
+
+        <Link to="/my-chats">
+          My Chats
         </Link>
       </>
     )}
@@ -88,7 +96,8 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
 const styles = {
 nav: {
 display: "flex",
-justifyContent: "space-between",
+justifyContent:
+"space-between",
 alignItems: "center",
 padding: "12px 20px",
 background: "#222",

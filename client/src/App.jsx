@@ -8,6 +8,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminChatDashboard from "./pages/AdminChatDashboard";
 import PartnerProfile from "./pages/PartnerProfile";
 import RequestTracking from "./pages/RequestTracking";
+import UserChatDashboard from "./pages/UserChatDashboard";
 
 import Navbar from "./components/Navbar";
 
@@ -31,6 +32,12 @@ return ( <BrowserRouter> <Navbar />
     <Route
       path="/chat/:requestId"
       element={<Chat />}
+    />
+
+    {/* USER CHAT DASHBOARD */}
+    <Route
+      path="/my-chats"
+      element={<UserChatDashboard />}
     />
 
     {/* REQUEST TRACKING */}
