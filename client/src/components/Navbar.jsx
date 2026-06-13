@@ -7,7 +7,6 @@ const { user, logout } = useAuth();
 const adminId =
 localStorage.getItem("adminId");
 
-// FIXED ROLE DETECTION
 const isAdmin =
 user?.role === "admin";
 
@@ -18,9 +17,12 @@ const handleLogout = () => {
 logout();
 
 
-localStorage.removeItem(
-  "adminId"
-);
+// IMPORTANT:
+// Do NOT remove adminId.
+// It identifies the active admin route
+// and is required for users to continue
+// chatting with the correct admin
+// after logging back in.
 
 window.location.href = "/";
 
@@ -31,12 +33,10 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
 
 
   <div style={styles.links}>
-    {/* EVERYONE */}
     <Link to="/">
       Home
     </Link>
 
-    {/* USER ONLY */}
     {isUser && (
       <>
         <Link to="/tracking">
@@ -49,7 +49,6 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       </>
     )}
 
-    {/* ADMIN ONLY */}
     {isAdmin && (
       <>
         <Link
@@ -64,7 +63,6 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       </>
     )}
 
-    {/* GUEST ONLY */}
     {!user && (
       <>
         <Link to="/login">
@@ -77,7 +75,6 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       </>
     )}
 
-    {/* LOGOUT */}
     {user && (
       <button
         onClick={handleLogout}
@@ -88,7 +85,6 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
     )}
   </div>
 </div>
-
 
 );
 }

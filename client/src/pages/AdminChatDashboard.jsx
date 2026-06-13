@@ -99,7 +99,7 @@ Loading chats... </div>
 
 return ( <div style={styles.container}> <h2>Admin Chats</h2>
 
-```
+
   {users.length === 0 && (
     <p>No chats available</p>
   )}
