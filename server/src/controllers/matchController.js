@@ -342,50 +342,64 @@ const rejectRequest = async (req, res) => {
  * USER DASHBOARD
  */
 const getUserDashboard = async (req, res) => {
-  try {
-    const { user_id } = req.params;
+try {
+const { user_id } = req.params;
 
-    const { data, error } = await supabase
-      .from("match_requests")
-      .select(`
-        id,
-        status,
-        created_at,
-        admin_message,
-        partner_contact,
-        partner_id,
-        public_partners:partner_id (
-          id,
-          name,
-          gender,
-          age,
-          country,
-          occupation,
-          profile_image,
-          bio,
-          contact_info
-        )
-      `)
-      .eq("user_id", user_id)
-      .order("created_at", { ascending: false });
 
-    if (error) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
+console.log("USER DASHBOARD USER ID:", user_id);
 
-    res.json({
-      message: "User dashboard loaded",
-      requests: data
-    });
+const { data, error } = await supabase
+  .from("match_requests")
+  .select(`
+    id,
+    status,
+    created_at,
+    admin_message,
+    partner_contact,
+    partner_id,
+    public_partners:partner_id (
+      id,
+      name,
+      gender,
+      age,
+      country,
+      occupation,
+      profile_image,
+      bio,
+      contact_info
+    )
+  `)
+  .eq("user_id", user_id)
+  .order("created_at", { ascending: false });
 
-  } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
-  }
+console.log("USER DASHBOARD DATA:", data);
+console.log("USER DASHBOARD ERROR:", error);
+
+if (error) {
+  return res.status(400).json({
+    error: error.message,
+    details: error
+  });
+}
+
+res.json({
+  message: "User dashboard loaded",
+  requests: data || []
+});
+
+
+} catch (err) {
+console.log("SERVER ERROR:", err);
+
+
+res.status(500).json({
+  error: err.message
+});
+
+
+}
 };
+
 
 module.exports = {
   requestMatch,
