@@ -61,7 +61,8 @@ const supabase = require("../config/supabase");
   match_request_id,
   sender_id,
   receiver_id,
-  message: message.trim()
+  message: message.trim(),
+  is_read: false
   }
   ])
   .select()
@@ -128,7 +129,101 @@ error: err.message
 }
 };
 
+/**
+
+* MARK MESSAGES AS READ
+  */
+  const markAsRead = async (req, res) => {
+  try {
+  const {
+  match_request_id,
+  receiver_id
+  } = req.body;
+
+  const { error } = await supabase
+  .from("chat_messages")
+  .update({
+  is_read: true
+  })
+  .eq(
+  "match_request_id",
+  match_request_id
+  )
+  .eq(
+  "receiver_id",
+  receiver_id
+  )
+  .eq(
+  "is_read",
+  false
+  );
+
+  if (error) {
+  return res.status(400).json({
+  error: error.message
+  });
+  }
+
+  res.json({
+  message: "Messages marked as read"
+  });
+
+} catch (err) {
+res.status(500).json({
+error: err.message
+});
+}
+};
+
+/**
+
+* GET UNREAD COUNTS
+  */
+  const getUnreadCounts = async (req, res) => {
+  try {
+  const { receiver_id } = req.params;
+
+  const { data, error } = await supabase
+  .from("chat_messages")
+  .select(
+  "match_request_id,is_read"
+  )
+  .eq(
+  "receiver_id",
+  receiver_id
+  )
+  .eq(
+  "is_read",
+  false
+  );
+
+  if (error) {
+  return res.status(400).json({
+  error: error.message
+  });
+  }
+
+  const counts = {};
+
+  (data || []).forEach((msg) => {
+  counts[msg.match_request_id] =
+  (counts[msg.match_request_id] || 0) + 1;
+  });
+
+  res.json({
+  counts
+  });
+
+} catch (err) {
+res.status(500).json({
+error: err.message
+});
+}
+};
+
 module.exports = {
 sendMessage,
-getChat
+getChat,
+markAsRead,
+getUnreadCounts
 };

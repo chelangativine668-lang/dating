@@ -25,13 +25,11 @@ loadChat(true);
 useEffect(() => {
 if (!requestId || !user?.id) return;
 
-
 const interval = setInterval(() => {
-  loadChat(false);
+loadChat(false);
 }, 5000);
 
 return () => clearInterval(interval);
-
 
 }, [requestId, user?.id]);
 
@@ -41,96 +39,113 @@ behavior: "smooth"
 });
 }, [messages]);
 
+const markMessagesAsRead = async () => {
+try {
+await API.post("/chat/mark-read", {
+match_request_id: requestId,
+receiver_id: user.id
+});
+} catch (err) {
+console.log(err);
+}
+};
+
 const loadChat = async (showLoader = false) => {
 try {
 if (showLoader) {
 setLoading(true);
 }
 
+const requestRes = await API.get(
+`/match/request/${requestId}`
+);
 
-  const requestRes = await API.get(
-    `/match/request/${requestId}`
-  );
+const request = requestRes.data?.request;
 
-  const request = requestRes.data?.request;
-
-  if (request) {
-    setRequestData(request);
-  }
-
-  const chatRes = await API.get(
-    `/chat/${requestId}`
-  );
-
-  setMessages(chatRes.data.messages || []);
-
-} catch (err) {
-  console.error(err);
-} finally {
-  if (showLoader) {
-    setLoading(false);
-  }
+if (request) {
+setRequestData(request);
 }
 
+const chatRes = await API.get(
+`/chat/${requestId}`
+);
+
+setMessages(chatRes.data.messages || []);
+
+// NEW: mark unread messages as read
+await markMessagesAsRead();
+
+} catch (err) {
+console.error(err);
+} finally {
+if (showLoader) {
+setLoading(false);
+}
+}
 
 };
 
 const sendMessage = async () => {
 if (!text.trim()) return;
 
-
 if (!requestData) {
-  alert("Request data not loaded");
-  return;
+alert("Request data not loaded");
+return;
 }
 
 try {
-  let receiverId;
+let receiverId;
 
-  if (isAdmin) {
-    receiverId = requestData.user_id;
-  } else {
-    receiverId = requestData.admin_id;
-  }
-
-  await API.post("/chat/send", {
-    match_request_id: requestId,
-    sender_id: user.id,
-    receiver_id: receiverId,
-    message: text
-  });
-
-  setText("");
-
-  await loadChat(false);
-
-} catch (err) {
-  console.error(err);
-  alert("Failed to send message");
+if (isAdmin) {
+receiverId = requestData.user_id;
+} else {
+receiverId = requestData.admin_id;
 }
 
+await API.post("/chat/send", {
+match_request_id: requestId,
+sender_id: user.id,
+receiver_id: receiverId,
+message: text
+});
+
+setText("");
+
+await loadChat(false);
+
+} catch (err) {
+console.error(err);
+alert("Failed to send message");
+}
 
 };
 
 if (!user) {
 return (
+
 <div style={{ padding: "20px" }}>
-Please login first. </div>
+Please login first.
+</div>
 );
 }
 
 if (loading) {
 return (
+
 <div style={{ padding: "20px" }}>
-Loading chat... </div>
+Loading chat...
+</div>
 );
 }
 
-return ( <div style={styles.container}> <h2>
-{isAdmin
-? "💬 Admin Chat"
-: "💬 Chat With Admin"} </h2>
+return (
 
+<div style={styles.container}>
+  <h2>
+    {isAdmin
+      ? "💬 Admin Chat"
+      : "💬 Chat With Admin"}
+  </h2>
 
   <div style={styles.chatBox}>
     {messages.length === 0 ? (
@@ -156,7 +171,10 @@ return ( <div style={styles.container}> <h2>
       ))
     )}
 
-    <div ref={chatEndRef} />
+```
+<div ref={chatEndRef} />
+```
+
   </div>
 
   <div style={styles.inputBox}>
@@ -172,17 +190,19 @@ return ( <div style={styles.container}> <h2>
       style={styles.input}
     />
 
-    <button
-      onClick={sendMessage}
-      style={styles.button}
-    >
-      Send
-    </button>
+```
+<button
+  onClick={sendMessage}
+  style={styles.button}
+>
+  Send
+</button>
+```
+
   </div>
 </div>
-
-
 );
+
 }
 
 const styles = {

@@ -97,7 +97,7 @@ Loading partners... </h2> </div>
 return ( <div style={styles.container}> <h1>Available Partners</h1>
 
 
-  {isAdmin && (
+  {/* {isAdmin && (
     <div style={styles.adminBanner}>
       Admin View
     </div>
@@ -107,7 +107,7 @@ return ( <div style={styles.container}> <h1>Available Partners</h1>
     <div style={styles.userBanner}>
       User View
     </div>
-  )}
+  )} */}
 
   {partners.length === 0 ? (
     <p>
