@@ -9,30 +9,57 @@ const [loading, setLoading] = useState(true);
 
 const { adminId: routeAdminId } = useParams();
 
+const adminId =
+localStorage.getItem("adminId");
+
+const isAdmin = !!adminId;
+
 useEffect(() => {
 validateAdmin();
 }, [routeAdminId]);
 
 const validateAdmin = () => {
 const allowedAdmins =
-import.meta.env.VITE_ALLOWED_ADMINS?.split(",") || [];
+import.meta.env
+.VITE_ALLOWED_ADMINS
+?.split(",") || [];
+
 
 let adminId = routeAdminId;
 
 if (!adminId) {
-  adminId = localStorage.getItem("adminId");
+  adminId =
+    localStorage.getItem("adminId");
 }
 
-if (adminId && allowedAdmins.length > 0) {
-  if (allowedAdmins.includes(adminId)) {
-    localStorage.setItem("adminId", adminId);
+if (
+  adminId &&
+  allowedAdmins.length > 0
+) {
+  if (
+    allowedAdmins.includes(adminId)
+  ) {
+    localStorage.setItem(
+      "adminId",
+      adminId
+    );
   } else {
-    console.log("❌ Invalid adminId blocked:", adminId);
-    localStorage.removeItem("adminId");
+    console.log(
+      "❌ Invalid adminId blocked:",
+      adminId
+    );
+
+    localStorage.removeItem(
+      "adminId"
+    );
+
     return;
   }
 } else if (adminId) {
-  localStorage.setItem("adminId", adminId);
+  localStorage.setItem(
+    "adminId",
+    adminId
+  );
 }
 
 loadPartners();
@@ -45,9 +72,13 @@ try {
 setLoading(true);
 
 
-  const res = await API.get("/partners");
+  const res = await API.get(
+    "/partners"
+  );
 
-  setPartners(res.data.partners || []);
+  setPartners(
+    res.data.partners || []
+  );
 } catch (err) {
   console.log(err);
 } finally {
@@ -58,15 +89,30 @@ setLoading(true);
 };
 
 if (loading) {
-return ( <div style={styles.container}> <h2>Loading partners...</h2> </div>
+return ( <div style={styles.container}> <h2>
+Loading partners... </h2> </div>
 );
 }
 
 return ( <div style={styles.container}> <h1>Available Partners</h1>
 
 
+  {isAdmin && (
+    <div style={styles.adminBanner}>
+      Admin View
+    </div>
+  )}
+
+  {!isAdmin && (
+    <div style={styles.userBanner}>
+      User View
+    </div>
+  )}
+
   {partners.length === 0 ? (
-    <p>No partners available.</p>
+    <p>
+      No partners available.
+    </p>
   ) : (
     <div style={styles.grid}>
       {partners.map((p) => (
@@ -88,9 +134,26 @@ container: {
 padding: "20px",
 textAlign: "center"
 },
+
 grid: {
 display: "flex",
 flexWrap: "wrap",
 justifyContent: "center"
+},
+
+adminBanner: {
+background: "#0d6efd",
+color: "white",
+padding: "10px",
+borderRadius: "8px",
+marginBottom: "15px"
+},
+
+userBanner: {
+background: "#198754",
+color: "white",
+padding: "10px",
+borderRadius: "8px",
+marginBottom: "15px"
 }
 };

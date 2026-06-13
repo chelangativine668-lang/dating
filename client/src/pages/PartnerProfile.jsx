@@ -16,11 +16,13 @@ const [loading, setLoading] = useState(true);
 const [requestMessage, setRequestMessage] =
 useState("");
 
-// DETECT ADMIN
+// ADMIN DETECTION
 const adminId =
 localStorage.getItem("adminId");
 
-const isAdmin = !!adminId;
+const isAdmin =
+!!adminId &&
+(!user || user.role === "admin");
 
 const adminRoute =
 adminId ||
@@ -35,7 +37,9 @@ try {
 setLoading(true);
 
 
-  const res = await API.get(`/partners/${id}`);
+  const res = await API.get(
+    `/partners/${id}`
+  );
 
   setPartner(res.data.partner);
 } catch (err) {
@@ -121,7 +125,6 @@ return <p>Partner not found</p>;
 
 return (
 <div style={{ padding: "20px" }}> <h2>{partner.name}</h2>
-
 
   <img
     src={partner.profile_image}

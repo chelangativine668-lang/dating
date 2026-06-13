@@ -6,6 +6,12 @@ const { user, logout } = useAuth();
 
 const adminId = localStorage.getItem("adminId");
 
+const isAdmin = user?.role === "admin";
+
+const isUser =
+user &&
+user.role !== "admin";
+
 const handleLogout = () => {
 logout();
 
@@ -21,11 +27,13 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
 
 
   <div style={styles.links}>
-    {/* HOME - EVERYONE */}
-    <Link to="/">Home</Link>
+    {/* EVERYONE */}
+    <Link to="/">
+      Home
+    </Link>
 
-    {/* USER SECTION */}
-    {user && (
+    {/* USER ONLY */}
+    {isUser && (
       <>
         <Link to="/tracking">
           Track Requests
@@ -33,24 +41,22 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       </>
     )}
 
-    {/* ADMIN SECTION */}
-    {adminId && (
+    {/* ADMIN ONLY */}
+    {isAdmin && (
       <>
-        <Link to={`/admin/${adminId}`}>
+        <Link
+          to={`/admin/${adminId}`}
+        >
           Dashboard
         </Link>
 
         <Link to="/admin/chat">
           Admin Chats
         </Link>
-
-        <Link to={`/admin/${adminId}`}>
-          Requests
-        </Link>
       </>
     )}
 
-    {/* GUEST */}
+    {/* GUEST ONLY */}
     {!user && (
       <>
         <Link to="/login">
@@ -63,8 +69,8 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       </>
     )}
 
-    {/* LOGGED IN USER OR ADMIN */}
-    {(user || adminId) && (
+    {/* LOGOUT */}
+    {user && (
       <button
         onClick={handleLogout}
         style={styles.logout}
@@ -86,13 +92,13 @@ justifyContent: "space-between",
 alignItems: "center",
 padding: "12px 20px",
 background: "#222",
-color: "white",
+color: "white"
 },
 
 links: {
 display: "flex",
 gap: "15px",
-alignItems: "center",
+alignItems: "center"
 },
 
 logout: {
@@ -101,6 +107,6 @@ color: "white",
 border: "none",
 padding: "8px 12px",
 borderRadius: "5px",
-cursor: "pointer",
-},
+cursor: "pointer"
+}
 };

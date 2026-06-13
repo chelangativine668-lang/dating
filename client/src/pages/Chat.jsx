@@ -8,11 +8,13 @@ const { requestId } = useParams();
 const { user } = useAuth();
 
 const [messages, setMessages] = useState([]);
+const [requestData, setRequestData] = useState(null);
 const [text, setText] = useState("");
-const [adminId, setAdminId] = useState("");
 const [loading, setLoading] = useState(true);
 
 const chatEndRef = useRef(null);
+
+const isAdmin = user?.role === "admin";
 
 useEffect(() => {
 if (requestId && user?.id) {
@@ -20,7 +22,6 @@ loadChat(true);
 }
 }, [requestId, user?.id]);
 
-// ✅ Auto refresh every 5 seconds
 useEffect(() => {
 if (!requestId || !user?.id) return;
 
@@ -34,7 +35,6 @@ return () => clearInterval(interval);
 
 }, [requestId, user?.id]);
 
-// ✅ Auto scroll to newest message
 useEffect(() => {
 chatEndRef.current?.scrollIntoView({
 behavior: "smooth"
@@ -54,15 +54,8 @@ setLoading(true);
 
   const request = requestRes.data?.request;
 
-  if (request?.admin_id) {
-    setAdminId(request.admin_id);
-  } else {
-    const storedAdminId =
-      localStorage.getItem("adminId");
-
-    if (storedAdminId) {
-      setAdminId(storedAdminId);
-    }
+  if (request) {
+    setRequestData(request);
   }
 
   const chatRes = await API.get(
@@ -86,17 +79,29 @@ const sendMessage = async () => {
 if (!text.trim()) return;
 
 
+if (!requestData) {
+  alert("Request data not loaded");
+  return;
+}
+
 try {
+  let receiverId;
+
+  if (isAdmin) {
+    receiverId = requestData.user_id;
+  } else {
+    receiverId = requestData.admin_id;
+  }
+
   await API.post("/chat/send", {
     match_request_id: requestId,
     sender_id: user.id,
-    receiver_id: adminId,
+    receiver_id: receiverId,
     message: text
   });
 
   setText("");
 
-  // ✅ Instant refresh after send
   await loadChat(false);
 
 } catch (err) {
@@ -110,7 +115,7 @@ try {
 if (!user) {
 return (
 <div style={{ padding: "20px" }}>
-Please login first </div>
+Please login first. </div>
 );
 }
 
@@ -121,7 +126,10 @@ Loading chat... </div>
 );
 }
 
-return ( <div style={styles.container}> <h2>💬 Chat</h2>
+return ( <div style={styles.container}> <h2>
+{isAdmin
+? "💬 Admin Chat"
+: "💬 Chat With Admin"} </h2>
 
 
   <div style={styles.chatBox}>

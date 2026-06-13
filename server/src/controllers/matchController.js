@@ -160,55 +160,61 @@ const getRequestById = async (req, res) => {
  * ADMIN DASHBOARD USERS
  */
 const getAdminDashboardUsers = async (req, res) => {
-  try {
-    const { admin_id } = req.params;
+try {
+const { admin_id } = req.params;
 
-    const { data, error } = await supabase
-      .from("match_requests")
-      .select(`
-        id,
-        status,
-        created_at,
-        user_id,
-        partner_id,
-        admin_message,
-        partner_contact,
-        users:user_id (
-          id,
-          name,
-          email
-        ),
-        public_partners:partner_id (
-          id,
-          name,
-          gender,
-          age,
-          country,
-          occupation,
-          profile_image,
-          contact_info
-        )
-      `)
-      .eq("admin_id", admin_id)
-      .order("created_at", { ascending: false });
 
-    if (error) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
+const { data, error } = await supabase
+  .from("match_requests")
+  .select(`
+    id,
+    status,
+    created_at,
+    user_id,
+    partner_id,
+    user_message,
+    admin_message,
+    partner_contact,
+    users:user_id (
+      id,
+      name,
+      email
+    ),
+    public_partners:partner_id (
+      id,
+      name,
+      gender,
+      age,
+      country,
+      occupation,
+      profile_image,
+      contact_info
+    )
+  `)
+  .eq("admin_id", admin_id)
+  .order("created_at", {
+    ascending: false
+  });
 
-    res.json({
-      message: "Dashboard loaded successfully",
-      requests: data
-    });
+if (error) {
+  return res.status(400).json({
+    error: error.message
+  });
+}
 
-  } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
-  }
+res.json({
+  message: "Dashboard loaded successfully",
+  requests: data
+});
+
+
+} catch (err) {
+res.status(500).json({
+error: err.message
+});
+}
 };
+
 
 /**
  * 🔥 NEW FIX: ADMIN CHAT LIST (MISSING ENDPOINT)
