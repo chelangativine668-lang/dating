@@ -2,120 +2,116 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
 
-const adminId =
-localStorage.getItem("adminId");
+  const adminId =
+    localStorage.getItem("adminId");
 
-const isAdmin =
-user?.role === "admin";
+  // FIXED ADMIN DETECTION
+  const isAdmin =
+    !!adminId || user?.role === "admin";
 
-const isUser =
-user &&
-user.role !== "admin";
+  const isUser =
+    !!user && !isAdmin;
 
-const handleLogout = () => {
-logout();
+  const handleLogout = () => {
+    logout();
 
+    localStorage.removeItem(
+      "adminId"
+    );
 
-localStorage.removeItem(
-  "adminId"
-);
+    window.location.href = "/";
+  };
 
-window.location.href = "/";
+  return (
+    <div style={styles.nav}>
+      <h3>Dating App</h3>
 
-
-};
-
-return ( <div style={styles.nav}> <h3>Dating App</h3>
-
-
-  <div style={styles.links}>
-    {/* EVERYONE */}
-    <Link to="/">
-      Home
-    </Link>
-
-    {/* USER ONLY */}
-    {isUser && (
-      <>
-        <Link to="/tracking">
-          Track Requests
+      <div style={styles.links}>
+        {/* EVERYONE */}
+        <Link to="/">
+          Home
         </Link>
 
-        <Link to="/my-chats">
-          My Chats
-        </Link>
-      </>
-    )}
+        {/* USER ONLY */}
+        {isUser && (
+          <>
+            <Link to="/tracking">
+              Track Requests
+            </Link>
 
-    {/* ADMIN ONLY */}
-    {isAdmin && (
-      <>
-        <Link
-          to={`/admin/${adminId}`}
-        >
-          Dashboard
-        </Link>
+            <Link to="/my-chats">
+              My Chats
+            </Link>
+          </>
+        )}
 
-        <Link to="/admin/chat">
-          Admin Chats
-        </Link>
-      </>
-    )}
+        {/* ADMIN ONLY */}
+        {isAdmin && (
+          <>
+            <Link
+              to={`/admin/${adminId}`}
+            >
+              Dashboard
+            </Link>
 
-    {/* GUEST ONLY */}
-    {!user && (
-      <>
-        <Link to="/login">
-          Login
-        </Link>
+            <Link to="/admin/chat">
+              Admin Chats
+            </Link>
+          </>
+        )}
 
-        <Link to="/register">
-          Register
-        </Link>
-      </>
-    )}
+        {/* GUEST ONLY */}
+        {!user && !isAdmin && (
+          <>
+            <Link to="/login">
+              Login
+            </Link>
 
-    {/* LOGOUT */}
-    {user && (
-      <button
-        onClick={handleLogout}
-        style={styles.logout}
-      >
-        Logout
-      </button>
-    )}
-  </div>
-</div>
+            <Link to="/register">
+              Register
+            </Link>
+          </>
+        )}
 
-
-);
+        {/* LOGOUT */}
+        {(user || isAdmin) && (
+          <button
+            onClick={handleLogout}
+            style={styles.logout}
+          >
+            Logout
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const styles = {
-nav: {
-display: "flex",
-justifyContent:
-"space-between",
-alignItems: "center",
-padding: "12px 20px",
-background: "#222",
-color: "white"
-},
+  nav: {
+    display: "flex",
+    justifyContent:
+      "space-between",
+    alignItems: "center",
+    padding: "12px 20px",
+    background: "#222",
+    color: "white"
+  },
 
-links: {
-display: "flex",
-gap: "15px",
-alignItems: "center"
-},
+  links: {
+    display: "flex",
+    gap: "15px",
+    alignItems: "center"
+  },
 
-logout: {
-background: "#dc3545",
-color: "white",
-border: "none",
-padding: "8px 12px",
-borderRadius: "5px",
-cursor: "pointer"
-}
+  logout: {
+    background: "#dc3545",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: "5px",
+    cursor: "pointer"
+  }
 };
