@@ -163,6 +163,19 @@ const getAdminDashboardUsers = async (req, res) => {
 try {
 const { admin_id } = req.params;
 
+// Find admin by route
+const { data: admin, error: adminError } =
+  await supabase
+    .from("users")
+    .select("id")
+    .eq("admin_route", admin_id)
+    .single();
+
+if (adminError || !admin) {
+  return res.status(404).json({
+    error: "Admin not found"
+  });
+}
 
 const { data, error } = await supabase
   .from("match_requests")
@@ -191,7 +204,7 @@ const { data, error } = await supabase
       contact_info
     )
   `)
-  .eq("admin_id", admin_id)
+  .eq("admin_id", admin.id)
   .order("created_at", {
     ascending: false
   });
@@ -204,9 +217,8 @@ if (error) {
 
 res.json({
   message: "Dashboard loaded successfully",
-  requests: data
+  requests: data || []
 });
-
 
 } catch (err) {
 res.status(500).json({
@@ -220,51 +232,67 @@ error: err.message
  * 🔥 NEW FIX: ADMIN CHAT LIST (MISSING ENDPOINT)
  */
 const getAdminChats = async (req, res) => {
-  try {
-    const { admin_id } = req.params;
+try {
+const { admin_id } = req.params;
 
-    const { data, error } = await supabase
-      .from("match_requests")
-      .select(`
-        id,
-        status,
-        created_at,
-        user_id,
-        partner_id,
-        admin_id,
-        users:user_id (
-          id,
-          name,
-          email
-        ),
-        public_partners:partner_id (
-          id,
-          name,
-          gender,
-          age,
-          country,
-          occupation,
-          profile_image
-        )
-      `)
-      .eq("admin_id", admin_id)
-      .order("created_at", { ascending: false });
+// Find admin by route
+const { data: admin, error: adminError } =
+  await supabase
+    .from("users")
+    .select("id")
+    .eq("admin_route", admin_id)
+    .single();
 
-    if (error) {
-      return res.status(400).json({
-        error: error.message
-      });
-    }
+if (adminError || !admin) {
+  return res.status(404).json({
+    error: "Admin not found"
+  });
+}
 
-    res.json({
-      chats: data
-    });
+const { data, error } = await supabase
+  .from("match_requests")
+  .select(`
+    id,
+    status,
+    created_at,
+    user_id,
+    partner_id,
+    admin_id,
+    users:user_id (
+      id,
+      name,
+      email
+    ),
+    public_partners:partner_id (
+      id,
+      name,
+      gender,
+      age,
+      country,
+      occupation,
+      profile_image
+    )
+  `)
+  .eq("admin_id", admin.id)
+  .order("created_at", {
+    ascending: false
+  });
 
-  } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
-  }
+if (error) {
+  return res.status(400).json({
+    error: error.message
+  });
+}
+
+res.json({
+  chats: data || []
+});
+
+} catch (err) {
+res.status(500).json({
+error: err.message
+});
+}
 };
 
 /**
