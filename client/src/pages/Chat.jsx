@@ -4,253 +4,414 @@ import API from "../api/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Chat() {
-const { requestId } = useParams();
-const { user } = useAuth();
+  const { requestId } = useParams();
+  const { user } = useAuth();
 
-const [messages, setMessages] = useState([]);
-const [requestData, setRequestData] = useState(null);
-const [text, setText] = useState("");
-const [loading, setLoading] = useState(true);
+  const [messages, setMessages] =
+    useState([]);
 
-const chatEndRef = useRef(null);
+  const [requestData, setRequestData] =
+    useState(null);
 
-const isAdmin = user?.role === "admin";
+  const [text, setText] =
+    useState("");
 
-useEffect(() => {
-if (requestId && user?.id) {
-loadChat(true);
-}
-}, [requestId, user?.id]);
+  const [loading, setLoading] =
+    useState(true);
 
-useEffect(() => {
-if (!requestId || !user?.id) return;
+  const [feedback, setFeedback] =
+    useState("");
 
-const interval = setInterval(() => {
-loadChat(false);
-}, 5000);
+  const [feedbackType, setFeedbackType] =
+    useState("error");
 
-return () => clearInterval(interval);
+  const chatEndRef = useRef(null);
 
-}, [requestId, user?.id]);
+  const isAdmin =
+    user?.role === "admin";
 
-useEffect(() => {
-chatEndRef.current?.scrollIntoView({
-behavior: "smooth"
-});
-}, [messages]);
+  useEffect(() => {
+    if (requestId && user?.id) {
+      loadChat(true);
+    }
+  }, [requestId, user?.id]);
 
-const markMessagesAsRead = async () => {
-try {
-await API.post("/chat/mark-read", {
-match_request_id: requestId,
-receiver_id: user.id
-});
-} catch (err) {
-console.log(err);
-}
-};
+  useEffect(() => {
+    if (!requestId || !user?.id)
+      return;
 
-const loadChat = async (showLoader = false) => {
-try {
-if (showLoader) {
-setLoading(true);
-}
+    const interval =
+      setInterval(() => {
+        loadChat(false);
+      }, 5000);
 
-const requestRes = await API.get(
-`/match/request/${requestId}`
-);
+    return () =>
+      clearInterval(interval);
+  }, [requestId, user?.id]);
 
-const request = requestRes.data?.request;
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView(
+      {
+        behavior: "smooth"
+      }
+    );
+  }, [messages]);
 
-if (request) {
-setRequestData(request);
-}
+  const markMessagesAsRead =
+    async () => {
+      try {
+        await API.post(
+          "/chat/mark-read",
+          {
+            match_request_id:
+              requestId,
+            receiver_id:
+              user.id
+          }
+        );
+      } catch (err) {
+        console.log(err);
+      }
+    };
 
-const chatRes = await API.get(
-`/chat/${requestId}`
-);
+  const loadChat = async (
+    showLoader = false
+  ) => {
+    try {
+      if (showLoader) {
+        setLoading(true);
+      }
 
-setMessages(chatRes.data.messages || []);
+      const requestRes =
+        await API.get(
+          `/match/request/${requestId}`
+        );
 
-// NEW: mark unread messages as read
-await markMessagesAsRead();
+      const request =
+        requestRes.data?.request;
 
-} catch (err) {
-console.error(err);
-} finally {
-if (showLoader) {
-setLoading(false);
-}
-}
+      if (request) {
+        setRequestData(
+          request
+        );
+      }
 
-};
+      const chatRes =
+        await API.get(
+          `/chat/${requestId}`
+        );
 
-const sendMessage = async () => {
-if (!text.trim()) return;
+      setMessages(
+        chatRes.data.messages ||
+          []
+      );
 
-if (!requestData) {
-alert("Request data not loaded");
-return;
-}
+      await markMessagesAsRead();
 
-try {
-let receiverId;
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (showLoader) {
+        setLoading(false);
+      }
+    }
+  };
 
-if (isAdmin) {
-receiverId = requestData.user_id;
-} else {
-receiverId = requestData.admin_id;
-}
+  const sendMessage =
+    async () => {
+      if (!text.trim()) return;
 
-await API.post("/chat/send", {
-match_request_id: requestId,
-sender_id: user.id,
-receiver_id: receiverId,
-message: text
-});
+      if (!requestData) {
+        setFeedbackType(
+          "error"
+        );
+        setFeedback(
+          "Request data not loaded."
+        );
+        return;
+      }
 
-setText("");
+      try {
+        let receiverId;
 
-await loadChat(false);
+        if (isAdmin) {
+          receiverId =
+            requestData.user_id;
+        } else {
+          receiverId =
+            requestData.admin_id;
+        }
 
-} catch (err) {
-console.error(err);
-alert("Failed to send message");
-}
+        await API.post(
+          "/chat/send",
+          {
+            match_request_id:
+              requestId,
+            sender_id: user.id,
+            receiver_id:
+              receiverId,
+            message: text
+          }
+        );
 
-};
+        setText("");
+        setFeedback("");
 
-if (!user) {
-return (
+        await loadChat(false);
 
-<div style={{ padding: "20px" }}>
-Please login first.
-</div>
-);
-}
+      } catch (err) {
+        console.error(err);
 
-if (loading) {
-return (
+        setFeedbackType(
+          "error"
+        );
 
-<div style={{ padding: "20px" }}>
-Loading chat...
-</div>
-);
-}
+        setFeedback(
+          "Failed to send message."
+        );
+      }
+    };
 
-return (
+  if (!user) {
+    return (
+      <div style={styles.loading}>
+        Please login first.
+      </div>
+    );
+  }
 
-<div style={styles.container}>
-  <h2>
-    {isAdmin
-      ? "💬 Admin Chat"
-      : "💬 Chat With Admin"}
-  </h2>
-
-  <div style={styles.chatBox}>
-    {messages.length === 0 ? (
-      <p>No messages yet</p>
-    ) : (
-      messages.map((msg) => (
+  if (loading) {
+    return (
+      <div style={styles.loading}>
         <div
-          key={msg.id}
-          style={{
-            ...styles.message,
-            alignSelf:
-              msg.sender_id === user.id
-                ? "flex-end"
-                : "flex-start",
-            backgroundColor:
-              msg.sender_id === user.id
-                ? "#DCF8C6"
-                : "#FFFFFF"
-          }}
+          style={
+            styles.spinner
+          }
+        />
+        <h2>
+          Loading chat...
+        </h2>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <div
+          style={styles.header}
         >
-          {msg.message}
+          <h2>
+            {isAdmin
+              ? "💬 Admin Chat"
+              : "💬 Chat With Admin"}
+          </h2>
         </div>
-      ))
-    )}
 
+        {feedback && (
+          <div
+            style={{
+              ...styles.feedback,
+              background:
+                feedbackType ===
+                "error"
+                  ? "#842029"
+                  : "#0f5132"
+            }}
+          >
+            {feedback}
+          </div>
+        )}
 
-<div ref={chatEndRef} />
+        <div style={styles.chatBox}>
+          {messages.length ===
+          0 ? (
+            <div
+              style={
+                styles.emptyState
+              }
+            >
+              No messages yet
+            </div>
+          ) : (
+            messages.map(
+              (msg) => (
+                <div
+                  key={msg.id}
+                  style={{
+                    ...styles.message,
+                    alignSelf:
+                      msg.sender_id ===
+                      user.id
+                        ? "flex-end"
+                        : "flex-start",
+                    background:
+                      msg.sender_id ===
+                      user.id
+                        ? "linear-gradient(135deg,#ff4d6d,#ff1f4b)"
+                        : "#2a2a2a",
+                    color:
+                      "#fff"
+                  }}
+                >
+                  {msg.message}
+                </div>
+              )
+            )
+          )}
 
+          <div
+            ref={chatEndRef}
+          />
+        </div>
 
-  </div>
+        <div
+          style={styles.inputBox}
+        >
+          <input
+            value={text}
+            placeholder="Type your message..."
+            onChange={(e) =>
+              setText(
+                e.target.value
+              )
+            }
+            onKeyDown={(e) =>
+              e.key ===
+                "Enter" &&
+              sendMessage()
+            }
+            style={
+              styles.input
+            }
+          />
 
-  <div style={styles.inputBox}>
-    <input
-      value={text}
-      placeholder="Type message..."
-      onChange={(e) =>
-        setText(e.target.value)
-      }
-      onKeyDown={(e) =>
-        e.key === "Enter" && sendMessage()
-      }
-      style={styles.input}
-    />
-
-
-<button
-  onClick={sendMessage}
-  style={styles.button}
->
-  Send
-</button>
-
-
-  </div>
-</div>
-);
-
+          <button
+            onClick={
+              sendMessage
+            }
+            style={
+              styles.button
+            }
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const styles = {
-container: {
-maxWidth: "700px",
-margin: "20px auto",
-padding: "20px",
-fontFamily: "Arial"
-},
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(135deg,#0d0d0d,#1b1b1b)",
+    padding: "20px"
+  },
 
-chatBox: {
-height: "450px",
-border: "1px solid #ccc",
-borderRadius: "10px",
-padding: "10px",
-display: "flex",
-flexDirection: "column",
-overflowY: "auto",
-background: "#f5f5f5"
-},
+  container: {
+    maxWidth: "900px",
+    margin: "0 auto",
+    background: "#181818",
+    borderRadius: "20px",
+    overflow: "hidden",
+    border:
+      "1px solid rgba(255,255,255,0.08)",
+    boxShadow:
+      "0 10px 30px rgba(0,0,0,0.35)"
+  },
 
-message: {
-padding: "10px",
-margin: "5px 0",
-borderRadius: "10px",
-maxWidth: "70%",
-wordBreak: "break-word"
-},
+  header: {
+    padding: "20px",
+    borderBottom:
+      "1px solid rgba(255,255,255,0.08)",
+    color: "#fff"
+  },
 
-inputBox: {
-display: "flex",
-gap: "10px",
-marginTop: "10px"
-},
+  chatBox: {
+    height: "500px",
+    overflowY: "auto",
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    background: "#121212"
+  },
 
-input: {
-flex: 1,
-padding: "10px",
-border: "1px solid #ccc",
-borderRadius: "5px"
-},
+  message: {
+    padding: "12px 16px",
+    borderRadius: "18px",
+    maxWidth: "75%",
+    wordBreak:
+      "break-word",
+    fontSize: "15px"
+  },
 
-button: {
-padding: "10px 20px",
-background: "green",
-color: "white",
-border: "none",
-borderRadius: "5px",
-cursor: "pointer"
-}
+  inputBox: {
+    display: "flex",
+    gap: "10px",
+    padding: "20px",
+    background: "#181818"
+  },
+
+  input: {
+    flex: 1,
+    padding: "14px",
+    borderRadius: "12px",
+    border:
+      "1px solid #333",
+    background: "#222",
+    color: "#fff",
+    outline: "none"
+  },
+
+  button: {
+    padding:
+      "14px 24px",
+    border: "none",
+    borderRadius: "12px",
+    background:
+      "linear-gradient(135deg,#ff4d6d,#ff1f4b)",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "bold"
+  },
+
+  feedback: {
+    margin: "15px",
+    padding: "12px",
+    borderRadius: "10px",
+    color: "#fff"
+  },
+
+  emptyState: {
+    color: "#999",
+    textAlign: "center",
+    marginTop: "50px"
+  },
+
+  loading: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(135deg,#0d0d0d,#1b1b1b)",
+    display: "flex",
+    flexDirection:
+      "column",
+    justifyContent:
+      "center",
+    alignItems: "center",
+    color: "#fff"
+  },
+
+  spinner: {
+    width: "45px",
+    height: "45px",
+    border:
+      "4px solid rgba(255,255,255,0.2)",
+    borderTop:
+      "4px solid #ff4d6d",
+    borderRadius: "50%",
+    marginBottom: "20px"
+  }
 };

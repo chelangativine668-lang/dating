@@ -17,34 +17,49 @@ const handleLogout = () => {
 logout();
 
 
-// IMPORTANT:
-// Do NOT remove adminId.
-// It identifies the active admin route
-// and is required for users to continue
-// chatting with the correct admin
-// after logging back in.
-
+// Keep admin route
 window.location.href = "/";
 
 
 };
 
-return ( <div style={styles.nav}> <h3>Dating App</h3>
+return ( <nav style={styles.nav}> <div style={styles.logoSection}> <span style={styles.logo}>
+❤️ </span>
 
+
+    <div>
+      <h2 style={styles.brand}>
+        SoulMatch
+      </h2>
+
+      <p style={styles.tagline}>
+        Dating Platform
+      </p>
+    </div>
+  </div>
 
   <div style={styles.links}>
-    <Link to="/">
+    <Link
+      to="/"
+      style={styles.link}
+    >
       Home
     </Link>
 
     {isUser && (
       <>
-        <Link to="/tracking">
-          Track Requests
+        <Link
+          to="/tracking"
+          style={styles.link}
+        >
+           Requests
         </Link>
 
-        <Link to="/my-chats">
-          My Chats
+        <Link
+          to="/my-chats"
+          style={styles.link}
+        >
+           Chats
         </Link>
       </>
     )}
@@ -53,11 +68,15 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       <>
         <Link
           to={`/admin/${adminId || ""}`}
+          style={styles.link}
         >
           Dashboard
         </Link>
 
-        <Link to="/admin/chat">
+        <Link
+          to="/admin/chat"
+          style={styles.link}
+        >
           Admin Chats
         </Link>
       </>
@@ -65,11 +84,17 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
 
     {!user && (
       <>
-        <Link to="/login">
+        <Link
+          to="/login"
+          style={styles.link}
+        >
           Login
         </Link>
 
-        <Link to="/register">
+        <Link
+          to="/register"
+          style={styles.link}
+        >
           Register
         </Link>
       </>
@@ -84,33 +109,83 @@ return ( <div style={styles.nav}> <h3>Dating App</h3>
       </button>
     )}
   </div>
-</div>
+</nav>
+
 
 );
 }
 
 const styles = {
 nav: {
+background:
+"linear-gradient(135deg, #111111, #1a1a1a)",
+borderBottom:
+"1px solid rgba(255,255,255,0.08)",
+padding: "15px 30px",
 display: "flex",
-justifyContent: "space-between",
+justifyContent:
+"space-between",
 alignItems: "center",
-padding: "12px 20px",
-background: "#222",
-color: "white"
+position: "sticky",
+top: 0,
+zIndex: 1000,
+backdropFilter: "blur(10px)",
+boxShadow:
+"0 8px 20px rgba(0,0,0,0.35)"
+},
+
+logoSection: {
+display: "flex",
+alignItems: "center",
+gap: "12px"
+},
+
+logo: {
+fontSize: "32px"
+},
+
+brand: {
+margin: 0,
+color: "#ffffff",
+fontSize: "22px",
+fontWeight: "700",
+letterSpacing: "0.5px"
+},
+
+tagline: {
+margin: 0,
+color: "#bbbbbb",
+fontSize: "12px"
 },
 
 links: {
 display: "flex",
-gap: "15px",
-alignItems: "center"
+alignItems: "center",
+gap: "14px",
+flexWrap: "wrap"
+},
+
+link: {
+textDecoration: "none",
+color: "#f5f5f5",
+padding: "10px 16px",
+borderRadius: "10px",
+fontWeight: "500",
+transition: "0.3s",
+background:
+"rgba(255,255,255,0.03)"
 },
 
 logout: {
-background: "#dc3545",
-color: "white",
 border: "none",
-padding: "8px 12px",
-borderRadius: "5px",
-cursor: "pointer"
+cursor: "pointer",
+background:
+"linear-gradient(135deg,#ff4d6d,#ff1f4b)",
+color: "#fff",
+padding: "10px 18px",
+borderRadius: "10px",
+fontWeight: "600",
+boxShadow:
+"0 4px 12px rgba(255,31,75,0.4)"
 }
 };
