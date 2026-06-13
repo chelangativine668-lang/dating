@@ -171,9 +171,9 @@ return (
       ))
     )}
 
-```
+
 <div ref={chatEndRef} />
-```
+
 
   </div>
 
@@ -190,14 +190,14 @@ return (
       style={styles.input}
     />
 
-```
+
 <button
   onClick={sendMessage}
   style={styles.button}
 >
   Send
 </button>
-```
+
 
   </div>
 </div>

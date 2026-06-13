@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import API from "../api/api";
 
 export default function AdminChatDashboard() {
 const navigate = useNavigate();
+const { user } = useAuth();
 
 const { adminId: routeAdminId } = useParams();
 
@@ -18,60 +20,62 @@ useEffect(() => {
 if (adminId) {
 loadChats();
 }
-}, [adminId]);
+}, [adminId, user]);
 
 const loadChats = async () => {
 try {
 setLoading(true);
 
-const res = await API.get(
-`/match/dashboard/${adminId}`
-);
 
-const requests =
-res.data.requests || [];
+  const res = await API.get(
+    `/match/dashboard/${adminId}`
+  );
 
-const groupedUsers = {};
+  const requests =
+    res.data.requests || [];
 
-requests.forEach((request) => {
-const user = request.users;
+  const groupedUsers = {};
 
-```
-if (!user) return;
+  requests.forEach((request) => {
+    const userData = request.users;
 
-if (!groupedUsers[user.id]) {
-  groupedUsers[user.id] = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    requests: []
-  };
-}
+    if (!userData) return;
 
-groupedUsers[user.id].requests.push(
-  request
-);
-```
+    if (!groupedUsers[userData.id]) {
+      groupedUsers[userData.id] = {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        requests: []
+      };
+    }
 
-});
+    groupedUsers[userData.id].requests.push(
+      request
+    );
+  });
 
-setUsers(
-Object.values(groupedUsers)
-);
+  setUsers(
+    Object.values(groupedUsers)
+  );
 
-const unreadRes = await API.get(
-`/chat/unread/${adminId}`
-);
+  // FIX: use admin UUID, not admin route
+  if (user?.id) {
+    const unreadRes = await API.get(
+      `/chat/unread/${user.id}`
+    );
 
-setUnreadCounts(
-unreadRes.data.counts || {}
-);
+    setUnreadCounts(
+      unreadRes.data.counts || {}
+    );
+  }
 
 } catch (err) {
-console.log(err);
+  console.log(err);
 } finally {
-setLoading(false);
+  setLoading(false);
 }
+
 
 };
 
@@ -81,166 +85,157 @@ navigate(`/chat/${requestId}`);
 
 if (!adminId) {
 return (
-
 <div style={{ padding: "20px" }}>
-Admin not found
-</div>
+Admin not found </div>
 );
 }
 
 if (loading) {
 return (
-
 <div style={{ padding: "20px" }}>
-Loading chats...
-</div>
+Loading chats... </div>
 );
 }
 
-return (
-
-<div style={styles.container}>
-  <h2>Admin Chats</h2>
-
-{users.length === 0 && ( <p>No chats available</p>
-)}
-
-{users.map((user) => ( <div
-   key={user.id}
-   style={styles.card}
- > <h3>{user.name}</h3>
+return ( <div style={styles.container}> <h2>Admin Chats</h2>
 
 ```
-  <p>{user.email}</p>
+  {users.length === 0 && (
+    <p>No chats available</p>
+  )}
 
-  <p>
-    Total Requests:
-    {" "}
-    {user.requests.length}
-  </p>
-
-  {user.requests.map((request) => (
+  {users.map((userData) => (
     <div
-      key={request.id}
-      style={styles.requestBox}
+      key={userData.id}
+      style={styles.card}
     >
-      <div
-        style={{
-          display: "flex",
-          gap: "15px",
-          alignItems: "center"
-        }}
-      >
-        <img
-          src={
-            request.public_partners
-              ?.profile_image
-          }
-          alt=""
-          style={styles.image}
-        />
+      <h3>{userData.name}</h3>
 
-        <div>
+      <p>{userData.email}</p>
+
+      <p>
+        Total Requests:{" "}
+        {userData.requests.length}
+      </p>
+
+      {userData.requests.map((request) => (
+        <div
+          key={request.id}
+          style={styles.requestBox}
+        >
           <div
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: "10px"
+              gap: "15px",
+              alignItems: "center"
             }}
           >
-            <h4>
-              {
-                request
-                  .public_partners
-                  ?.name
+            <img
+              src={
+                request.public_partners
+                  ?.profile_image
               }
-            </h4>
+              alt=""
+              style={styles.image}
+            />
 
-            {unreadCounts[
-              request.id
-            ] > 0 && (
-              <span
+            <div>
+              <div
                 style={{
-                  background: "red",
-                  color: "white",
-                  borderRadius: "50%",
-                  minWidth: "25px",
-                  height: "25px",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent:
-                    "center",
-                  fontSize: "12px",
-                  fontWeight: "bold"
+                  gap: "10px"
                 }}
               >
-                {
-                  unreadCounts[
-                    request.id
-                  ]
-                }
-              </span>
-            )}
-          </div>
+                <h4>
+                  {
+                    request
+                      .public_partners
+                      ?.name
+                  }
+                </h4>
 
-          <p>
-            Status:
-            {" "}
-            <strong>
-              {request.status}
-            </strong>
-          </p>
-
-          <p>
-            Requested:
-            {" "}
-            {new Date(
-              request.created_at
-            ).toLocaleString()}
-          </p>
-
-          {request.user_message && (
-            <div
-              style={{
-                background:
-                  "#f5f5f5",
-                padding: "10px",
-                borderRadius: "8px",
-                marginTop: "8px"
-              }}
-            >
-              <strong>
-                User Message:
-              </strong>
+                {unreadCounts[
+                  request.id
+                ] > 0 && (
+                  <span
+                    style={{
+                      background: "red",
+                      color: "white",
+                      borderRadius: "50%",
+                      minWidth: "25px",
+                      height: "25px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent:
+                        "center",
+                      fontSize: "12px",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    {
+                      unreadCounts[
+                        request.id
+                      ]
+                    }
+                  </span>
+                )}
+              </div>
 
               <p>
-                {
-                  request.user_message
-                }
+                Status:{" "}
+                <strong>
+                  {request.status}
+                </strong>
               </p>
-            </div>
-          )}
-        </div>
-      </div>
 
-      <button
-        onClick={() =>
-          openChat(request.id)
-        }
-        style={styles.chatBtn}
-      >
-        Open Chat
-      </button>
+              <p>
+                Requested:{" "}
+                {new Date(
+                  request.created_at
+                ).toLocaleString()}
+              </p>
+
+              {request.user_message && (
+                <div
+                  style={{
+                    background:
+                      "#f5f5f5",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    marginTop: "8px"
+                  }}
+                >
+                  <strong>
+                    User Message:
+                  </strong>
+
+                  <p>
+                    {
+                      request.user_message
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={() =>
+              openChat(request.id)
+            }
+            style={styles.chatBtn}
+          >
+            Open Chat
+          </button>
+        </div>
+      ))}
     </div>
   ))}
 </div>
 
 
-))}
-
-</div>
 );
-
 }
 
 const styles = {
