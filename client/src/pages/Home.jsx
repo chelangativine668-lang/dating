@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import API from "../api/api";
 import PartnerCard from "../components/PartnerCard";
 
@@ -7,12 +8,10 @@ export default function Home() {
 const [partners, setPartners] = useState([]);
 const [loading, setLoading] = useState(true);
 
-const { adminId: routeAdminId } = useParams();
+const { user } = useAuth();
 
-const adminId =
-localStorage.getItem("adminId");
-
-const isAdmin = !!adminId;
+const { adminId: routeAdminId } =
+useParams();
 
 useEffect(() => {
 validateAdmin();
@@ -29,7 +28,9 @@ let adminId = routeAdminId;
 
 if (!adminId) {
   adminId =
-    localStorage.getItem("adminId");
+    localStorage.getItem(
+      "adminId"
+    );
 }
 
 if (
@@ -37,7 +38,9 @@ if (
   allowedAdmins.length > 0
 ) {
   if (
-    allowedAdmins.includes(adminId)
+    allowedAdmins.includes(
+      adminId
+    )
   ) {
     localStorage.setItem(
       "adminId",
@@ -72,9 +75,10 @@ try {
 setLoading(true);
 
 
-  const res = await API.get(
-    "/partners"
-  );
+  const res =
+    await API.get(
+      "/partners"
+    );
 
   setPartners(
     res.data.partners || []
@@ -94,20 +98,9 @@ Loading partners... </h2> </div>
 );
 }
 
-return ( <div style={styles.container}> <h1>Available Partners</h1>
+return ( <div style={styles.container}> <h1>
+Available Partners </h1>
 
-
-  {/* {isAdmin && (
-    <div style={styles.adminBanner}>
-      Admin View
-    </div>
-  )}
-
-  {!isAdmin && (
-    <div style={styles.userBanner}>
-      User View
-    </div>
-  )} */}
 
   {partners.length === 0 ? (
     <p>
